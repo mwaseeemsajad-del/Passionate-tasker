@@ -8,13 +8,14 @@ import { cn } from "@/lib/cn";
  *
  * - primary:   ink pill, white arrow badge. Use on light sections.
  * - secondary: white pill, ink badge with a green arrow. Use on dark sections and over photos.
+ * - outline:   white pill with a hairline border. The second action next to a primary on light sections.
  * - tint:      full-width green-tint pill, no arrow. Pricing cards.
  * - inverse:   full-width white pill, no arrow. Inside dark cards.
  *
  * Pass `href` to render a link, or leave it out to render a <button>.
  */
 
-type Variant = "primary" | "secondary" | "tint" | "inverse";
+type Variant = "primary" | "secondary" | "outline" | "tint" | "inverse";
 
 const base =
   "group/btn inline-flex min-h-11 cursor-pointer items-center rounded-full font-medium text-base leading-none transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-50";
@@ -22,11 +23,12 @@ const base =
 const variants: Record<Variant, string> = {
   primary: "gap-4 bg-ink py-1 pr-1 pl-[18px] text-white",
   secondary: "gap-4 bg-white py-1 pr-1 pl-[18px] text-ink ring-1 ring-white/35",
+  outline: "gap-4 border border-line bg-white py-1 pr-1 pl-[18px] text-ink hover:border-ink",
   tint: "w-full justify-center bg-accent-100 px-5 py-3.5 text-ink hover:bg-accent",
   inverse: "w-full justify-center bg-white px-5 py-3.5 text-ink hover:bg-accent-100",
 };
 
-const hasArrow = (v: Variant) => v === "primary" || v === "secondary";
+const hasArrow = (v: Variant) => v === "primary" || v === "secondary" || v === "outline";
 
 function Label({ children, roll }: { children: ReactNode; roll: boolean }) {
   if (!roll) return <span>{children}</span>;
@@ -52,7 +54,7 @@ function ArrowBadge({ variant }: { variant: Variant }) {
       aria-hidden="true"
       className={cn(
         "grid size-9 shrink-0 place-items-center overflow-hidden rounded-full",
-        variant === "primary" ? "bg-white text-ink" : "bg-ink text-accent",
+        variant === "primary" ? "bg-white text-ink" : variant === "outline" ? "bg-ink text-white" : "bg-ink text-accent",
       )}
     >
       <ArrowRight

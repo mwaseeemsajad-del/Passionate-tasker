@@ -14,7 +14,7 @@ export function HowItWorks() {
             tone="dark"
             eyebrow="How it works"
             title="From “something's broken” to fixed, in four steps"
-            subtitle="Book by typing, tapping or talking. Most jobs are booked in under two minutes."
+            subtitle="Book by typing, tapping or talking. Booking takes about two minutes, then we call you to confirm."
           />
           <Button href="/book" variant="secondary">
             Start a booking

@@ -54,6 +54,12 @@ export const checks: Check[] = [
   },
 ];
 
+/** The checks that apply to one trade: the three everyone passes, plus its register. */
+export function checksFor(trade: string): Check[] {
+  const register = trade === "gas" || trade === "heating" ? "gas-safe" : trade === "electrical" ? "electrical" : null;
+  return checks.filter((c) => c.id === "identity" || c.id === "dbs" || c.id === "insurance" || c.id === register);
+}
+
 export const recheckNote =
   "Every check is done before a tradesperson's first job, again every year, and whenever a document runs out.";
 

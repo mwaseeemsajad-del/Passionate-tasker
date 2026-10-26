@@ -1,6 +1,6 @@
-import { CreditCard, MessageSquare, ReceiptPoundSterling, RotateCcw, ShieldCheck, UserRound } from "lucide-react";
+import { CreditCard, MessageSquare, Mic, PhoneCall, ReceiptPoundSterling, ShieldCheck, UserRound } from "lucide-react";
 import { photos } from "./photos";
-import type { Faq, Feature, Guide, RecentJob, Review, StatItem, Step } from "@/types/content";
+import type { Faq, Feature, Guide, RecentJob, Review, StatItem, Step, Trade } from "@/types/content";
 
 /*
  * SAMPLE DATA for the landing page prototype.
@@ -31,17 +31,21 @@ export const aboutStats: StatItem[] = [
   { display: "7 days", label: "UK support, 8am to 8pm" },
 ];
 
+// Written for the concierge MVP: a person calls to agree the price and arranges
+// who comes. There is no app, no instant price and no choosing a tradesperson
+// yet. Update these when matching and payments arrive (milestones 07 and 08).
+// A free return visit is not offered until the client confirms it.
 export const reasons: Feature[] = [
-  { icon: ShieldCheck, title: "Four checks, every year", body: "Photo ID, a DBS check, trade registration and £2m insurance, renewed annually." },
-  { icon: ReceiptPoundSterling, title: "A fixed price first", body: "You see the full price before booking. Extra work needs your yes in the app." },
-  { icon: RotateCcw, title: "We come back for free", body: "If the fix fails within 30 days, someone returns at no cost to you." },
+  { icon: ShieldCheck, title: "Checked, every year", body: "Photo ID, a basic DBS check, insurance, and the right register for gas and electrics. Checked again every year." },
+  { icon: ReceiptPoundSterling, title: "Price agreed first", body: "We agree the price with you on the phone before anything is booked. Extra work needs your yes first." },
+  { icon: Mic, title: "Book the way that suits you", body: "Talk to Book by voice, fill in a short form, or call us. Every answer is read back to you." },
 ];
 
 export const steps: Step[] = [
-  { icon: MessageSquare, title: "Tell us the job", body: "Type it, pick it from a list, or say it out loud. Add a photo if it helps.", timing: "About 1 minute" },
-  { icon: ReceiptPoundSterling, title: "See your fixed price", body: "Labour and standard parts included. No call-out fee, no surprises on the day.", timing: "Straight away" },
-  { icon: UserRound, title: "Choose who comes", body: "Up to three checked tradespeople free at your time, with photos, reviews and registrations.", timing: "You pick the slot" },
-  { icon: CreditCard, title: "Pay when it's done", body: "Nothing to pay up front. You pay once the job is finished and you've checked it.", timing: "Price agreed first" },
+  { icon: MessageSquare, title: "Tell us the job", body: "Pick it from a list, type it, or say it out loud with Book by voice.", timing: "About 2 minutes" },
+  { icon: PhoneCall, title: "We call you to confirm", body: "A real person goes through the job with you and agrees the price before anything is booked.", timing: "Before anything is booked" },
+  { icon: UserRound, title: "We send someone checked", body: "We arrange someone who has passed our checks, and tell you their name before they arrive.", timing: "On the day you chose" },
+  { icon: CreditCard, title: "Pay when it's done", body: "Nothing to pay online. We tell you how to pay when we call.", timing: "Price agreed first" },
 ];
 
 export const recentJobs: RecentJob[] = [
@@ -64,11 +68,20 @@ export const guides: Guide[] = [
   { slug: "find-your-stopcock", date: "2026-09-14", title: "Find your stopcock before you need it", excerpt: "Where it usually is, and how to turn the water off in a burst-pipe emergency.", photoAlt: "water pipe and valve on a wall", photo: photos.guideStopcock },
 ];
 
-export const ctaChecklist = ["No call-out fee", "Every tradesperson checked", "Book by voice, phone or online"];
+/** Shortcuts under the hero, straight into booking with the trade and job chosen. Slugs must exist in services.ts. */
+export const popularJobs: { label: string; trade: Trade; job: string }[] = [
+  { label: "Dripping tap", trade: "plumbing", job: "dripping-tap" },
+  { label: "Mount a TV", trade: "handyman", job: "tv-mounting" },
+  { label: "Boiler service", trade: "heating", job: "boiler-service" },
+  { label: "Paint a room", trade: "painting", job: "paint-room" },
+  { label: "Fuse box tripping", trade: "electrical", job: "fuse-tripping" },
+];
+
+export const ctaChecklist = ["Price agreed before booking", "Every tradesperson checked", "Book by voice, phone or online"];
 
 export const faqs: Faq[] = [
-  { question: "How do you check tradespeople?", answer: "We match photo ID to a live selfie, run a basic DBS check every year, look them up on the register for their trade, and keep their insurance certificate on file." },
-  { question: "What if the job costs more than the price shown?", answer: "The tradesperson has to send you the new price in the app, and nothing extra happens until you say yes." },
+  { question: "How do you check tradespeople?", answer: "We check government photo ID, see a basic DBS certificate every year, look them up on the register for their trade, and check their insurance certificate." },
+  { question: "What if the job costs more than the price shown?", answer: "The prices on the site are starting prices. We agree the full price with you on the phone before anything is booked, and nothing extra happens until you say yes." },
   { question: "Can I book without using the website?", answer: "Yes. Call us between 8am and 8pm and we will book it for you. Or use Book by voice, which asks one question at a time." },
   { question: "When do I pay?", answer: "Only once the job is finished and you've checked it. Nothing is taken when you book. We tell you how to pay when we call to confirm." },
 ];

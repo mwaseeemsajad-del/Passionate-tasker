@@ -126,6 +126,55 @@ export function ChoiceGroup({ name, legend, hint, error, choices, value, onChang
   );
 }
 
+/** Like ChoiceGroup, but any number of options can be ticked. */
+type CheckboxGroupProps = Omit<ChoiceGroupProps, "value" | "onChange"> & { value: string[]; onChange: (value: string[]) => void };
+
+export function CheckboxGroup({ name, legend, hint, error, choices, value, onChange, columns = 2, className }: CheckboxGroupProps) {
+  const id = `${name}-group`;
+  const toggle = (v: string) => onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]);
+  return (
+    <fieldset id={id} aria-describedby={describedBy(id, hint, error)} className={cn("grid gap-3", className)}>
+      <legend className="mb-2 text-base font-semibold">{legend}</legend>
+      {hint && (
+        <p id={`${id}-hint`} className="-mt-2 text-[0.9375rem] text-text-3">
+          {hint}
+        </p>
+      )}
+      {error && <FieldError id={`${id}-error`}>{error}</FieldError>}
+      <div className={cn("grid gap-3", columns === 2 && "sm:grid-cols-2", columns === 3 && "sm:grid-cols-2 lg:grid-cols-3")}>
+        {choices.map((choice) => {
+          const checked = value.includes(choice.value);
+          const optionId = `${name}-${choice.value}`;
+          return (
+            <label
+              key={choice.value}
+              htmlFor={optionId}
+              className={cn(
+                "flex min-h-14 cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink",
+                checked ? "border-ink bg-accent-50" : "border-line bg-white hover:border-text-3",
+              )}
+            >
+              <input
+                id={optionId}
+                type="checkbox"
+                name={name}
+                value={choice.value}
+                checked={checked}
+                onChange={() => toggle(choice.value)}
+                className="mt-1 size-5 shrink-0 accent-ink focus-visible:outline-none"
+              />
+              <span className="grid gap-0.5">
+                <span className="font-medium">{choice.label}</span>
+                {choice.detail && <span className="text-[0.9375rem] text-text-3">{choice.detail}</span>}
+              </span>
+            </label>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
 /*
  * Listed at the top of a step when it has errors. It takes focus, so a screen
  * reader announces the problems, and each one links to its field.

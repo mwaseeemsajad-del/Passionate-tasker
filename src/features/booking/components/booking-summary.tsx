@@ -2,7 +2,7 @@ import { CheckList } from "@/components/ui";
 import { formatFromPrice } from "@/data/services";
 import { describe, type Day, type Draft } from "../draft";
 
-const promises = ["ID and DBS checked", "Insured up to £2 million", "Fixed price before work starts", "Pay only when you are happy"];
+const promises = ["ID and DBS checked", "Insurance checked", "Price agreed before anything is booked", "Pay when the job is done"];
 
 /** Running summary beside the form, so the booking so far is always in view. */
 export function BookingSummary({ draft, days }: { draft: Draft; days: Day[] }) {
@@ -10,7 +10,7 @@ export function BookingSummary({ draft, days }: { draft: Draft; days: Day[] }) {
   const rows = [
     { label: "Trade", value: service?.name },
     { label: "Job", value: job?.name },
-    { label: "Price", value: job ? formatFromPrice(job) : undefined },
+    { label: "Indicative price", value: job ? formatFromPrice(job) : undefined },
     { label: "Postcode", value: draft.postcode.trim() || undefined },
     { label: "When", value: day && slot ? `${day.label}, ${slot.label.toLowerCase()}` : undefined },
   ];

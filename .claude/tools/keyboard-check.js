@@ -2,7 +2,7 @@ const { chromium } = require("playwright-core");
 (async () => {
   const b = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe" });
   let failed = false;
-  for (const path of ["/", "/book", "/accessibility", "/trust", "/how-it-works"]) {
+  for (const path of ["/", "/book", "/accessibility", "/trust", "/how-it-works", "/pricing", "/help", "/about"]) {
     const p = await b.newPage({ viewport: { width: 1280, height: 900 } });
     await p.goto("http://localhost:3100" + path, { waitUntil: "networkidle" });
     const seen = new Set(); const bad = []; let stops = 0;

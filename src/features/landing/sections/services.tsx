@@ -1,6 +1,6 @@
 import { Container, Section, SectionHeader } from "@/components/ui";
 import { RevealGroup, RevealItem } from "@/components/motion/reveal";
-import { services } from "@/data/services";
+import { PRICE_NOTE, services } from "@/data/services";
 import { OtherJobCard, ServiceCard } from "../components/service-card";
 
 /*
@@ -29,6 +29,7 @@ export function Services() {
             <OtherJobCard />
           </RevealItem>
         </RevealGroup>
+        <p className="mt-10 text-center text-sm text-text-3">{PRICE_NOTE}</p>
       </Container>
     </Section>
   );

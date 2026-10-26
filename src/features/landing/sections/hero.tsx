@@ -7,6 +7,9 @@ import { Reveal } from "@/components/motion/reveal";
 import { site } from "@/data/site";
 import { heroRating, heroStat } from "@/data/landing";
 import { photos } from "@/data/photos";
+import { heroVideos } from "@/data/videos";
+import { HeroVideo } from "../components/hero-video";
+import { PopularJobs } from "../components/popular-jobs";
 
 const crew = ["Daniel Okafor", "Amira Khan", "Rob Miller", "Jas Singh"];
 
@@ -19,6 +22,8 @@ export function Hero() {
   return (
     <section aria-labelledby="hero-title" className="on-dark relative overflow-hidden rounded-b-[1.5rem] bg-moss-deep text-white sm:rounded-b-[2rem] lg:rounded-b-section">
       <Image src={photos.hero} alt="" fill priority sizes="100vw" className="object-cover object-[70%_center]" />
+      {/* Clips of tradespeople at work play over the photo once they have loaded. */}
+      <HeroVideo videos={heroVideos} />
       <div aria-hidden="true" className="hc-shade absolute inset-0 bg-linear-to-r from-ink/90 via-ink/65 to-ink/20" />
       <div aria-hidden="true" className="absolute inset-0 bg-linear-to-t from-ink/60 via-transparent to-ink/40 lg:hidden" />
 
@@ -33,7 +38,7 @@ export function Hero() {
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-4">
             <Button href="/book" variant="secondary">
-              Get a fixed price
+              Book a job
             </Button>
             <Link
               href="/book?voice=1"
@@ -43,6 +48,7 @@ export function Hero() {
               Book by voice
             </Link>
           </div>
+          <PopularJobs />
           <Rating score={heroRating.score} count={heroRating.count} tone="dark" />
         </Reveal>
 
@@ -61,7 +67,7 @@ export function Hero() {
                   <Avatar key={name} name={name} size="sm" className="ring-2 ring-moss" />
                 ))}
               </div>
-              <Link href="#how-it-works" className="rounded-full bg-white px-4 py-2.5 text-sm font-medium text-ink">
+              <Link href="/services" className="rounded-full bg-white px-4 py-2.5 text-sm font-medium text-ink">
                 Meet the trades
               </Link>
             </div>

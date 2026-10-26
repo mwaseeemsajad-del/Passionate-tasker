@@ -15,7 +15,7 @@ const { chromium } = require("playwright-core");
 const AXE = require.resolve("axe-core/axe.min.js");
 const BASE = process.env.BASE || "http://localhost:3100";
 const CHROME = "C:/Program Files/Google/Chrome/Application/chrome.exe";
-const PAGES = ["/", "/book", "/accessibility", "/trust", "/how-it-works"];
+const PAGES = ["/", "/book", "/accessibility", "/trust", "/how-it-works", "/pricing", "/help", "/about"];
 const SETTINGS = [
   { name: "normal", text: "normal", contrast: "normal" },
   { name: "high contrast", text: "normal", contrast: "high" },

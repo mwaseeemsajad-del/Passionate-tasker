@@ -9,7 +9,7 @@ export const plans: Plan[] = [
     price: { monthly: 0, yearly: 0 },
     ctaLabel: "Book a single job",
     featuresIntro: "What's included:",
-    features: ["Fixed price per job", "30-day work guarantee", "Book by voice or phone"],
+    features: ["Price agreed before anything is booked", "A checked tradesperson", "Book by voice, online or by phone"],
   },
   {
     id: "home-cover",
