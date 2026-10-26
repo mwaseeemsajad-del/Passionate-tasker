@@ -16,7 +16,7 @@ export function About() {
               We started Passionate Taskers for the people who worry most about it: older customers, people living alone, and
               anyone who uses a screen reader. Every page, call and booking is built for them first.
             </p>
-            <Button href="#how-it-works">How we check trades</Button>
+            <Button href="/trust">How we check trades</Button>
           </Reveal>
           <Reveal variant="scale">
             <Media alt="smiling older woman in her living room" src={photos.about} ratio="4/5" />

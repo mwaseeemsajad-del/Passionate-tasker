@@ -1,4 +1,5 @@
 import { Badge, Button, Media } from "@/components/ui";
+import { servicePrice } from "@/data/services";
 import { cn } from "@/lib/cn";
 import type { Service } from "@/types/content";
 
@@ -8,7 +9,7 @@ import type { Service } from "@/types/content";
  * Takes a Service, so service and category pages can reuse it unchanged.
  */
 export function ServiceRow({ service, reverse = false }: { service: Service; reverse?: boolean }) {
-  const price = `From £${service.fromPrice}${service.priceUnit === "hour" ? " an hour" : ""}`;
+  const price = servicePrice(service);
   return (
     <article className="grid items-center gap-6 md:grid-cols-[1fr_1.3fr] md:gap-12">
       <div className={cn("grid justify-items-start gap-5", reverse && "md:order-2")}>

@@ -20,11 +20,11 @@ decorating, carpentry, handyman and mounting.
 
 | # | Milestone | Phase | Status | Target |
 |---|---|---|---|---|
-| 01 | [Frontend](01-frontend.md) | MVP | Mostly done | Sat 17 Oct |
+| 01 | [Frontend](01-frontend.md) | MVP | Done except client photos and logo | Sat 17 Oct |
 | 02 | [Accessibility](02-accessibility.md) | MVP | Done except the NVDA test | Sat 17 Oct |
-| 03 | [Backend on Supabase](03-backend-supabase.md) | MVP | Not started, needs keys | Mon 19 to Tue 20 Oct |
+| 03 | [Backend on Supabase](03-backend-supabase.md) | MVP | Built; SQL to run, team email (N2) | Mon 19 to Tue 20 Oct |
 | 04 | [MVP launch](04-mvp-launch.md) | MVP | Not started | Wed 21 to Thu 22 Oct |
-| 05 | [Accounts](05-accounts.md) | After launch | Not started | |
+| 05 | [Accounts](05-accounts.md) | Brought forward | Built 26 Oct: login, sign-up, reset, dashboards | |
 | 06 | [Tradesperson onboarding and verification](06-tradesperson-verification.md) | After launch | Not started | |
 | 07 | [Marketplace loop](07-marketplace-loop.md) | After launch | Not started | |
 | 08 | [Payments and reviews](08-payments-reviews.md) | After launch | Not started | |
@@ -47,7 +47,7 @@ Nothing that depends on one of these is built until it is answered.
 
 | # | Needed | From | Blocks |
 |---|---|---|---|
-| N1 | Supabase project URL and anon key (never the service_role key in chat) | Client | 03 |
+| N1 | ~~Supabase project URL and key~~ Received 26 Oct | Client | 03 |
 | N2 | Email address that receives new booking requests | Client | 03 |
 | N3 | Domain name, and access to its DNS | Client | 04 |
 | N4 | Real phone number and support hours | Client | 04 |

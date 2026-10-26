@@ -15,7 +15,7 @@ export const SLOTS: { id: SlotId; label: string; hours: string }[] = [
   { id: "evening", label: "Evening", hours: "5pm to 8pm" },
 ];
 
-export const STEPS = ["The job", "When", "Your details", "Check and send"] as const;
+export const STEPS = ["The job", "When and who", "Your details", "Check and send"] as const;
 
 export type Draft = {
   step: number;
@@ -28,6 +28,10 @@ export type Draft = {
   name: string;
   phone: string;
   email: string;
+  /** The tradesperson the customer chose, or "" to let us choose (always "" by voice). */
+  provider: string;
+  /** Their name as shown when chosen, for the review step. */
+  providerName: string;
 };
 
 export const EMPTY_DRAFT: Draft = {
@@ -41,6 +45,8 @@ export const EMPTY_DRAFT: Draft = {
   name: "",
   phone: "",
   email: "",
+  provider: "",
+  providerName: "",
 };
 
 export const POSTCODE = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i;

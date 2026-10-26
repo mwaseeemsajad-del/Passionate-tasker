@@ -13,6 +13,8 @@ type VoicePanelProps = {
   supported: boolean;
   onStart: () => void;
   onStop: () => void;
+  /** Carry on after a pause. */
+  onResume: () => void;
   /** An answer typed instead of spoken. */
   onType: (text: string) => void;
   /** Cut the question short and listen now. */
@@ -26,7 +28,7 @@ type VoicePanelProps = {
  * are shown for anyone helping, but not announced by screen readers: the
  * guide is already speaking, and two voices at once is worse than one.
  */
-export function VoicePanel({ status, said, heard, supported, onStart, onStop, onType, onSkip, startRef }: VoicePanelProps) {
+export function VoicePanel({ status, said, heard, supported, onStart, onStop, onResume, onType, onSkip, startRef }: VoicePanelProps) {
   const active = status !== "off";
   const [typed, setTyped] = useState("");
 
@@ -61,6 +63,16 @@ export function VoicePanel({ status, said, heard, supported, onStart, onStop, on
                   Answer now
                 </button>
               )}
+              {status === "paused" && (
+                <button
+                  type="button"
+                  onClick={onResume}
+                  className="inline-flex min-h-14 cursor-pointer items-center justify-center gap-3 rounded-full bg-accent px-6 text-h4 font-semibold text-ink"
+                >
+                  <Mic aria-hidden="true" className="size-5" strokeWidth={2} />
+                  Carry on
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onStop}
@@ -84,8 +96,9 @@ export function VoicePanel({ status, said, heard, supported, onStart, onStop, on
 
           <p className="text-[0.9375rem] text-on-ink-3">
             You don’t have to wait: start talking and we stop to listen. Or press <b className="text-white">Space</b> to answer now. Say{" "}
-            <b className="text-white">stop</b>, <b className="text-white">go back</b> or <b className="text-white">repeat</b> at any time, or press
-            Escape. Your browser will ask to use the microphone the first time.
+            <b className="text-white">go back</b> or <b className="text-white">repeat</b> at any time. Say <b className="text-white">stop</b> to
+            pause and <b className="text-white">carry on</b> to pick up where you left off, with no button to find. Escape turns voice booking off.
+            Your browser will ask to use the microphone the first time.
           </p>
 
           {(active || said) && (
@@ -97,10 +110,17 @@ export function VoicePanel({ status, said, heard, supported, onStart, onStop, on
                     "size-2.5 rounded-full",
                     status === "listening" && "animate-pulse bg-accent motion-reduce:animate-none",
                     status === "speaking" && "bg-white",
+                    status === "paused" && "bg-accent-100",
                     status === "off" && "bg-on-ink-3",
                   )}
                 />
-                {status === "listening" ? "Listening: say your answer now" : status === "speaking" ? "Speaking: talk any time to answer" : "Paused"}
+                {status === "listening"
+                  ? "Listening: say your answer now"
+                  : status === "speaking"
+                    ? "Speaking: talk any time to answer"
+                    : status === "paused"
+                      ? "Paused: say carry on when you are ready"
+                      : "Off"}
               </p>
               {said && (
                 <p className="text-body text-white">

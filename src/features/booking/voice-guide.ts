@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatFromPrice, getService, jobsFor, services } from "@/data/services";
 import { isEcho, listenOnce, primeAudio, speakAndWait, stopSpeaking, type ListenResult } from "@/lib/speech";
+import { supabaseConfigured } from "@/lib/supabase/env";
 import { EMAIL, POSTCODE, SLOTS, describe, isPhone, isPostcodeOk, type Day, type Draft } from "./draft";
 import {
   findChoice,
@@ -13,9 +14,11 @@ import {
   isBack,
   isNo,
   isRepeat,
+  isResume,
   isShortAnswer,
   isSkip,
   isStop,
+  isTurnOff,
   isYes,
   matchJob,
   matchTrade,
@@ -35,8 +38,10 @@ import {
  * - Every answer is read back. Postcodes, phone numbers and email addresses
  *   are spelt out, because one wrong character is the likeliest mistake and
  *   the hardest to notice by ear.
- * - "Stop", "go back" and "repeat" work at every question; Escape stops it.
- * - After three silences it pauses instead of talking to an empty room.
+ * - "Go back" and "repeat" work at every question.
+ * - Saying "stop" pauses it, and so do three silences in a row. While paused
+ *   it keeps listening, quietly, so "carry on" picks the booking up again
+ *   without finding the button. Escape or the Stop button turn it off.
  * - Nothing moves on without a clear yes.
  */
 
@@ -49,9 +54,14 @@ export type GuideContext = {
   goTo: (step: number) => void;
   /** The form's own Continue button: checks the step, then moves on (or sends on the last step). */
   next: () => void;
+  /** The form's first error, such as the server refusing the request, so it can be said out loud. */
+  problem: string | null;
 };
 
-export type GuideStatus = "off" | "speaking" | "listening";
+export type GuideStatus = "off" | "speaking" | "listening" | "paused";
+
+/** How long a pause keeps listening for "carry on" before the microphone is turned off. */
+const PAUSE_LIMIT_MS = 5 * 60 * 1000;
 
 type Question = {
   key: string;
@@ -384,6 +394,10 @@ export function useVoiceGuide(context: GuideContext) {
   const skipRef = useRef<(() => void) | null>(null);
   const skipToAnswer = useCallback(() => skipRef.current?.(), []);
 
+  // "Carry on" while paused, for anyone pressing a button instead of speaking.
+  const resumeRef = useRef<(() => void) | null>(null);
+  const resume = useCallback(() => resumeRef.current?.(), []);
+
   const stop = useCallback(() => {
     controllerRef.current?.abort();
     controllerRef.current = null;
@@ -517,25 +531,77 @@ export function useVoiceGuide(context: GuideContext) {
         })();
       });
 
+    /*
+     * Paused: say why, then keep listening without the tone until the visitor
+     * says "carry on". Anything else heard is ignored, so a conversation in
+     * the room does not move the booking on. True means carry on.
+     */
+    const pause = async (message: string): Promise<boolean> => {
+      await say(message);
+      const until = Date.now() + PAUSE_LIMIT_MS;
+      // The "Carry on" button: stop the quiet listening and resume.
+      let resumed = false;
+      let listening = new AbortController();
+      resumeRef.current = () => {
+        resumed = true;
+        listening.abort();
+      };
+      const onStop = () => listening.abort();
+      signal.addEventListener("abort", onStop, { once: true });
+      try {
+        while (!signal.aborted && !resumed && Date.now() < until) {
+          setStatus("paused");
+          listening = new AbortController();
+          const r = await listenOnce({ signal: listening.signal, tone: false, onInterim: setHeard });
+          if (signal.aborted) return false;
+          if (resumed) return true;
+          if ("problem" in r) {
+            if (r.problem !== "no-speech") return false;
+            // Some browsers give up on silence at once; do not spin the microphone on and off.
+            await wait(300);
+            continue;
+          }
+          setHeard(r.text);
+          if (isTurnOff(r.text)) {
+            await say("Voice booking is off. Your answers are kept on this page.");
+            return false;
+          }
+          if (isResume(r.text)) return true;
+        }
+        if (resumed) return true;
+      } finally {
+        resumeRef.current = null;
+        signal.removeEventListener("abort", onStop);
+      }
+      if (!signal.aborted) await say("Voice booking has turned off. Your answers are kept. Press Start voice booking to carry on.");
+      return false;
+    };
+    const PAUSED_HELP = "Say carry on when you are ready, or say turn off.";
+
     const asked = new Set<string>();
     let silences = 0;
     let lastKey = "";
     let stuck = 0;
     let notHeard = false;
+    let lastProblem: string | null = null;
 
     // Said before the next question, as part of it, so it can be talked over too:
     // first the greeting, later the read-back of the last answer.
-    let carry = "Hello. I'll ask a few short questions. Answer after the beep, or just start talking. Say stop at any time.";
+    let carry = "Hello. I'll ask a few short questions. Answer after the beep, or just start talking. Say stop to pause.";
 
     while (!signal.aborted) {
       const c = contextRef.current;
 
       if (c.reference) {
         await say(
-          `${carry} Your request has been sent. Your reference is ${spellOut(c.reference)}. We will call you to confirm who is coming and the final price. This is a demo, so for now nobody will actually call.`,
+          `${carry} Your request has been sent. Your reference is ${spellOut(c.reference)}. We will call you to confirm who is coming and the final price.${supabaseConfigured ? "" : " This is a demo, so for now nobody will actually call."}`,
         );
         break;
       }
+
+      // Say a new problem from the form (the request was refused, say) before asking again.
+      if (c.problem && c.problem !== lastProblem) carry = [carry, c.problem].filter(Boolean).join(" ");
+      lastProblem = c.problem;
 
       const question = nextQuestion(c, asked);
       if (question.key === "advance-2") {
@@ -572,8 +638,12 @@ export function useVoiceGuide(context: GuideContext) {
         silences += 1;
         notHeard = true;
         if (silences >= 3) {
-          await say("I have not heard anything, so I have paused. Your answers are kept. Press Start voice booking to carry on.");
-          break;
+          if (!(await pause(`I have not heard anything, so I have paused. Your answers are kept. ${PAUSED_HELP}`))) break;
+          silences = 0;
+          notHeard = false;
+          lastKey = "";
+          carry = "Carrying on.";
+          continue;
         }
         lastKey = question.key;
         continue;
@@ -590,8 +660,10 @@ export function useVoiceGuide(context: GuideContext) {
       }
 
       if (isStop(text)) {
-        await say("Stopped. Your answers are kept on this page.");
-        break;
+        if (!(await pause(`Paused. Your answers are kept. ${PAUSED_HELP}`))) break;
+        lastKey = "";
+        carry = "Carrying on.";
+        continue;
       }
 
       // The recogniser often mishears, so try each of its guesses in turn.
@@ -634,5 +706,5 @@ export function useVoiceGuide(context: GuideContext) {
     }
   }, []);
 
-  return { status, said, heard, start, stop, answerByText, skipToAnswer };
+  return { status, said, heard, start, stop, resume, answerByText, skipToAnswer };
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Button } from "@/components/ui";
 import { site } from "@/data/site";
-import { InfoPage, InfoSection, Prose } from "@/features/info/info-page";
+import { InfoPage, InfoSection, PointList, Prose } from "@/features/info/info-page";
 
 export const metadata: Metadata = {
   title: "How it works",
@@ -72,10 +72,53 @@ export default function HowItWorksPage() {
         ))}
       </ol>
 
+      <InfoSection id="ways" title="Three ways to book">
+        <PointList
+          items={[
+            { title: "With the form", body: <p>Four short steps: the job, when, your details, then check and send. Your answers are kept if you leave the page.</p> },
+            {
+              title: "By voice",
+              body: (
+                <p>
+                  Press Start voice booking and talk. It asks one question at a time and reads every answer back. Say stop to pause and carry on to
+                  pick up again, with no button to find. It works in Chrome and Edge.
+                </p>
+              ),
+            },
+            {
+              title: "On the phone",
+              body: (
+                <p>
+                  Call <a href={site.phone.href}>{site.phone.display}</a>, {site.supportHours}. We fill in the booking for you.
+                </p>
+              ),
+            },
+          ]}
+        />
+      </InfoSection>
+
+      <InfoSection id="checks" title="Who comes to your home">
+        <Prose>
+          <p>
+            Every tradesperson has their photo ID, a basic DBS certificate and their insurance checked before their first job, and again every year.
+            Gas work is only done by Gas Safe registered engineers. <a href="/trust">See exactly what we check</a>.
+          </p>
+        </Prose>
+      </InfoSection>
+
+      <InfoSection id="tradespeople" title="For tradespeople">
+        <Prose>
+          <p>
+            Create a tradesperson account, tell us your trades and area, and we arrange your checks. Once you are approved, jobs we offer you appear
+            on your dashboard to accept or decline. <a href="/join">How joining works</a>.
+          </p>
+        </Prose>
+      </InfoSection>
+
       <InfoSection id="start" title="Ready when you are">
         <div className="flex flex-wrap gap-3">
           <Button href="/book">Book with the form</Button>
-          <Button href="/book?voice=1" variant="primary">
+          <Button href="/book?voice=1" variant="outline">
             Book by voice
           </Button>
         </div>

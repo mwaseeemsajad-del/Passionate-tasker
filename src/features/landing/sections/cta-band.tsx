@@ -10,11 +10,11 @@ export function CtaBand() {
       <Container className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
         <Reveal className="grid justify-items-start gap-5">
           <h2 id="cta-title" className="text-h2">
-            Got a job that’s been waiting? Get a price in a minute.
+            Got a job that’s been waiting? Book in about two minutes, and we call you to agree the price.
           </h2>
           <p className="text-on-ink-2">Nothing to pay until the work is done and you’re happy with it.</p>
           <Button href="/book" variant="secondary">
-            Get a fixed price
+            Book a job
           </Button>
           <CheckList items={ctaChecklist} tone="dark" className="mt-2" />
         </Reveal>

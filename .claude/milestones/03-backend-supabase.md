@@ -1,6 +1,6 @@
 # 03: Backend on Supabase
 
-**Status:** Not started, waiting on the Supabase keys (N1) and the team email (N2)
+**Status:** Built 26 October 2026. Waiting on: the SQL being run in Supabase, and the team email (N2) for notifications
 **Phase:** MVP
 **Depends on:** 01
 **Why it matters:** today nothing is saved. This milestone makes a booking a real request.
@@ -16,26 +16,26 @@
 ## Checklist
 
 ### Setup
-- [ ] Supabase project created by the client; URL and anon key in `.env.local`, service role key only in Vercel's server environment
-- [ ] `.env.example` listing every variable, with no values
-- [ ] Supabase client for server code in `src/server/supabase.ts`
+- [x] Supabase project created by the client; URL and publishable key in `.env.local`. The service role key is not used at all
+- [x] `.env.example` listing every variable, with no values
+- [x] Supabase clients in `src/lib/supabase/` (server, browser, proxy). Schema in `supabase/migrations/`
 
 ### Tables (first slice)
-- [ ] `booking_requests`: reference, trade, job, postcode, details, date, time slot, name, phone, email, booked_by_voice, status (new, contacted, booked, done, cancelled), created_at
+- [x] `booking_requests` (status: new, offered, accepted, declined, completed, cancelled), plus `profiles`, `provider_profiles`, `provider_checks` for accounts
 - [ ] `waitlist`: email, role (customer or tradesperson), trade, postcode, created_at
-- [ ] `tradesperson_interest`: name, phone, email, trades, area, registrations they hold, created_at
-- [ ] Row level security on every table: no public read; inserts only through the server
+- [x] Replaced by tradesperson accounts and onboarding (`provider_profiles`)
+- [x] Row level security on every table: people read only their own rows; writes only through checked database functions and column grants
 
 ### Features
-- [ ] `submitBookingRequest` saves the request and returns its reference
+- [x] `submitBookingRequest` saves the request and returns its reference (linked to the account when signed in)
 - [ ] Email to the team for every new request (provider: Resend, or Supabase's own if preferred)
 - [ ] Confirmation email to the customer when they gave an email address
-- [ ] Rate limit on the booking action (for example 5 requests per hour per IP) to stop spam, with no CAPTCHA puzzles
-- [ ] The confirmation screen and the voice guide stop saying "this is a demo"
+- [x] Rate limit: 5 requests an hour per phone number, in the database function, no CAPTCHA
+- [x] The confirmation screen and the voice guide stop saying "this is a demo" once Supabase is configured
 
 ### Admin
-- [ ] Password-protected `/admin` list of booking requests, newest first, with a status the team can change
-- [ ] Only named admin accounts can open it
+- [x] `/admin`: requests grouped by what to do next, offer a job to an approved tradesperson, cancel, reopen, mark done; approve each check and each tradesperson
+- [x] Only admin accounts can open it; admins are made by hand in SQL (see `0002_team_admin.sql`)
 
 ## Done when
 

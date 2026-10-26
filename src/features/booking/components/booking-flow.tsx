@@ -3,9 +3,11 @@
 import { ArrowLeft, CircleCheck, TriangleAlert } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { Button, ChoiceGroup, ErrorSummary, TextAreaField, TextField } from "@/components/ui";
+import { Button, ChoiceGroup, ErrorSummary, StepProgress, TextAreaField, TextField } from "@/components/ui";
 import { formatFromPrice, getService, jobsFor, services } from "@/data/services";
+import { site } from "@/data/site";
 import { canUseVoice } from "@/lib/speech";
+import { supabaseConfigured } from "@/lib/supabase/env";
 import type { Trade } from "@/types/content";
 import { submitBookingRequest } from "../actions";
 import {
@@ -25,15 +27,19 @@ import {
 } from "../draft";
 import { useVoiceGuide } from "../voice-guide";
 import { BookingSummary } from "./booking-summary";
+import { ProviderPicker } from "./provider-picker";
 import { VoicePanel } from "./voice-panel";
 
 /** Start from the saved draft, or from ?trade=…&job=… when coming from a "Book" button. */
 function initialDraft(params: URLSearchParams): Draft {
   const saved = loadDraft();
   const trade = params.get("trade");
-  if (!trade || !getService(trade) || saved.trade === trade) return saved;
+  if (!trade || !getService(trade)) return saved;
   const job = params.get("job");
-  return { ...EMPTY_DRAFT, trade: trade as Trade, job: jobsFor(trade as Trade).some((j) => j.slug === job) ? (job ?? "") : "" };
+  const validJob = jobsFor(trade as Trade).some((j) => j.slug === job) ? (job ?? "") : "";
+  // Same trade as the saved draft: keep the answers, but a job chosen on a service page wins.
+  if (saved.trade === trade) return validJob && validJob !== saved.job ? { ...saved, job: validJob } : saved;
+  return { ...EMPTY_DRAFT, trade: trade as Trade, job: validJob };
 }
 
 export function BookingFlow() {
@@ -85,15 +91,28 @@ export function BookingFlow() {
   }, []);
 
   const send = useCallback((d: Draft) => {
+    // No connection, or the server could not be reached: say so, keep every answer, and offer the phone.
+    const unreachable = (message: string) => {
+      focusTarget.current = "errors";
+      setErrors([{ id: "step-title", message }]);
+    };
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      unreachable(`You seem to be offline. Your answers are kept: connect to the internet and press Send again, or call us on ${site.phone.display}.`);
+      return;
+    }
     startSending(async () => {
-      const result = await submitBookingRequest(d);
-      if (result.ok) {
-        clearDraft();
-        focusTarget.current = "done";
-        setReference(result.reference);
-      } else {
-        focusTarget.current = "errors";
-        setErrors(result.errors);
+      try {
+        const result = await submitBookingRequest(d);
+        if (result.ok) {
+          clearDraft();
+          focusTarget.current = "done";
+          setReference(result.reference);
+        } else {
+          focusTarget.current = "errors";
+          setErrors(result.errors);
+        }
+      } catch {
+        unreachable(`We could not reach our server. Your answers are kept: press Send again in a minute, or call us on ${site.phone.display}.`);
       }
     });
   }, []);
@@ -110,7 +129,7 @@ export function BookingFlow() {
     else send(d);
   }, [days, goTo, send]);
 
-  const voice = useVoiceGuide({ draft, days, reference, set, goTo, next });
+  const voice = useVoiceGuide({ draft, days, reference, set, goTo, next, problem: errors[0]?.message ?? null });
 
   const startOver = () => {
     voice.stop();
@@ -133,6 +152,7 @@ export function BookingFlow() {
           supported={voiceSupported}
           onStart={voice.start}
           onStop={voice.stop}
+          onResume={voice.resume}
           onType={voice.answerByText}
           onSkip={voice.skipToAnswer}
           startRef={startRef}
@@ -146,9 +166,11 @@ export function BookingFlow() {
               Your reference is <b className="tracking-wide">{reference}</b>. We will call you to confirm who is coming and the final
               price.
             </p>
-            <p className="rounded-md bg-white px-4 py-3 text-[0.9375rem] text-text-3">
-              This is a demo. Nothing is stored yet and nobody will call.
-            </p>
+            {!supabaseConfigured && (
+              <p className="rounded-md bg-white px-4 py-3 text-[0.9375rem] text-text-3">
+                This is a demo. Nothing is stored yet and nobody will call.
+              </p>
+            )}
             <Button onClick={startOver}>Book another job</Button>
           </div>
         ) : (
@@ -161,7 +183,7 @@ export function BookingFlow() {
             }}
             className="grid gap-8 rounded-xl border border-line p-6 sm:p-8"
           >
-            <StepList current={draft.step} />
+            <StepProgress steps={STEPS} current={draft.step} label="Booking steps" />
             <ErrorSummary ref={summaryRef} errors={errors} />
 
             <h2 id="step-title" ref={headingRef} tabIndex={-1} className="text-h3 outline-none">
@@ -241,6 +263,10 @@ export function BookingFlow() {
                   onChange={(v) => set("slot", v as Draft["slot"])}
                   error={errorFor("slot-group")}
                 />
+                <ProviderPicker trade={draft.trade} postcode={draft.postcode} value={draft.provider} onChange={(id, name) => {
+                    set("provider", id);
+                    set("providerName", name);
+                  }} />
               </>
             )}
 
@@ -299,32 +325,6 @@ export function BookingFlow() {
   );
 }
 
-function StepList({ current }: { current: number }) {
-  return (
-    <ol className="flex flex-wrap gap-x-6 gap-y-2 text-[0.9375rem]" aria-label="Booking steps">
-      {STEPS.map((label, i) => (
-        <li key={label} aria-current={i === current ? "step" : undefined} className="flex items-center gap-2">
-          <span
-            aria-hidden="true"
-            className={
-              i < current
-                ? "grid size-7 place-items-center rounded-full bg-accent-100 text-sm font-semibold"
-                : i === current
-                  ? "grid size-7 place-items-center rounded-full bg-ink text-sm font-semibold text-white"
-                  : "grid size-7 place-items-center rounded-full border border-line text-sm text-text-3"
-            }
-          >
-            {i + 1}
-          </span>
-          <span className={i === current ? "font-semibold" : "text-text-3"}>
-            {label}
-            {i < current && <span className="sr-only"> (done)</span>}
-          </span>
-        </li>
-      ))}
-    </ol>
-  );
-}
 
 function Review({ draft, days, onChange }: { draft: Draft; days: ReturnType<typeof upcomingDays>; onChange: (step: number) => void }) {
   const { service, job, day, slot } = describe(draft, days);
@@ -334,6 +334,7 @@ function Review({ draft, days, onChange }: { draft: Draft; days: ReturnType<type
     { label: "Postcode", value: draft.postcode, step: 0 },
     { label: "Notes", value: draft.details.trim() || "None", step: 0 },
     { label: "When", value: day && slot ? `${day.long}, ${slot.label.toLowerCase()} (${slot.hours})` : "", step: 1 },
+    { label: "Who comes", value: draft.provider ? draft.providerName : "We choose a checked tradesperson near you", step: 1 },
     { label: "Name", value: draft.name, step: 2 },
     { label: "Phone", value: draft.phone, step: 2 },
     { label: "Email", value: draft.email.trim() || "Not given", step: 2 },

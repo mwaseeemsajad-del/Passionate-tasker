@@ -249,7 +249,14 @@ export const isSkip = (text: string) => hasAny(clean(text), ["skip", "no", "noth
 export const isStop = (text: string) =>
   /^\s*(please )?(stop|cancel|quit|exit|end)( (it|now|please|voice|listening|talking))*\s*$/i.test(text);
 
-export const isRepeat = (text: string) => hasAny(clean(text), ["repeat", "say that again", "again", "pardon", "what", "sorry"]);
+/** Said while paused, to pick the booking up again. */
+export const isResume = (text: string) =>
+  hasAny(clean(text), ["carry on", "continue", "resume", "start", "start again", "go on", "i'm back", "im back", "i am back", "ready", "let's go", "lets go"]);
+
+/** Said while paused, to turn voice booking off completely. */
+export const isTurnOff = (text: string) => hasAny(clean(text), ["turn off", "switch off", "goodbye", "bye", "close voice", "finish voice"]);
+
+export const isRepeat =(text: string) => hasAny(clean(text), ["repeat", "say that again", "again", "pardon", "what", "sorry"]);
 
 export const isBack = (text: string) => hasAny(clean(text), ["go back", "back", "previous"]);
 

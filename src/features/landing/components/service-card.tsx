@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Badge, Media } from "@/components/ui";
+import { servicePrice } from "@/data/services";
 import type { Service } from "@/types/content";
 
 /*
@@ -8,7 +9,7 @@ import type { Service } from "@/types/content";
  * The whole card links to booking with the trade already chosen.
  */
 export function ServiceCard({ service }: { service: Service }) {
-  const price = `From £${service.fromPrice}${service.priceUnit === "hour" ? " an hour" : ""}`;
+  const price = servicePrice(service);
   return (
     <article className="group relative grid content-start gap-4">
       <div className="overflow-hidden rounded-lg">
@@ -22,7 +23,7 @@ export function ServiceCard({ service }: { service: Service }) {
         />
       </div>
       <h3 className="flex items-center justify-between gap-3 text-h4">
-        <Link href={`/book?trade=${service.slug}`} className="after:absolute after:inset-0">
+        <Link href={`/services/${service.slug}`} className="after:absolute after:inset-0">
           {service.name}
         </Link>
         <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-full bg-ink text-white transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none">

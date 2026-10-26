@@ -141,6 +141,19 @@ export function jobsFor(trade: Trade | ""): ServiceJob[] {
   return service ? [...service.jobs, OTHER_JOB] : [];
 }
 
+/** Shown wherever prices are listed, until the client confirms real prices (input N6). */
+export const PRICE_NOTE = "Prices are indicative starting prices. The full price is agreed with you on the phone before anything is booked.";
+
+/** The trade's starting price as shown on badges: "From £45 an hour". */
+export function servicePrice(service: Service): string {
+  return `From £${service.fromPrice}${service.priceUnit === "hour" ? " an hour" : ""}`;
+}
+
+/** Booking link with the trade, and the job when known, already chosen. */
+export function bookingHref(trade: Trade, job?: string): string {
+  return job ? `/book?trade=${trade}&job=${job}` : `/book?trade=${trade}`;
+}
+
 export function formatFromPrice(job: ServiceJob): string {
   return job.fromPrice === null ? "Priced after a quick call" : `From £${job.fromPrice}`;
 }
