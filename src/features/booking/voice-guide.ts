@@ -370,6 +370,8 @@ export function useVoiceGuide(context: GuideContext) {
   const [status, setStatus] = useState<GuideStatus>("off");
   const [said, setSaid] = useState("");
   const [heard, setHeard] = useState("");
+  // The key of the question being asked ("postcode", "date"), so the form can highlight that field.
+  const [asking, setAsking] = useState("");
 
   // The conversation is a long async loop; it reads the latest form state
   // through this ref instead of the values from when it started.
@@ -403,6 +405,7 @@ export function useVoiceGuide(context: GuideContext) {
     controllerRef.current = null;
     stopSpeaking();
     setStatus("off");
+    setAsking("");
   }, []);
 
   // Never leave the microphone or the voice running after leaving the page.
@@ -616,6 +619,7 @@ export function useVoiceGuide(context: GuideContext) {
       }
       stuck = 0;
       const prompt = question.key === lastKey && question.short ? question.short : question.prompt;
+      setAsking(question.key);
       const result = await ask([carry, notHeard ? "Sorry, I did not hear anything." : "", prompt].filter(Boolean).join(" "));
       carry = "";
       notHeard = false;
@@ -703,8 +707,9 @@ export function useVoiceGuide(context: GuideContext) {
     if (controllerRef.current === controller) {
       controllerRef.current = null;
       setStatus("off");
+      setAsking("");
     }
   }, []);
 
-  return { status, said, heard, start, stop, resume, answerByText, skipToAnswer };
+  return { status, said, heard, asking, start, stop, resume, answerByText, skipToAnswer };
 }

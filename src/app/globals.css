@@ -139,6 +139,17 @@
     @apply outline-accent;
   }
 
+  /* The field voice booking is asking about. Dashed and tinted, so it never
+     looks like the focus ring, and thick enough to see at a glance. */
+  [data-voice-asking] {
+    outline: 4px dashed var(--color-ink);
+    outline-offset: 8px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-accent-50);
+    /* Scrolled to the top of the screen, clear of the help assistant in the corner. */
+    scroll-margin-top: 1.5rem;
+  }
+
   /* FAQ accordion: animate the open/close height where the browser supports it. */
   details::details-content {
     block-size: 0;
