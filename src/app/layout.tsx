@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Figtree } from "next/font/google";
 import { MotionProvider } from "@/components/motion/motion-provider";
 import { site } from "@/data/site";
+import { ANNOUNCER_ID } from "@/lib/announce";
 import { DISPLAY_SCRIPT } from "@/lib/display-prefs";
 import "./globals.css";
 
@@ -38,6 +39,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to main content
         </a>
         <MotionProvider>{children}</MotionProvider>
+        {/* Filled by announce(); lives outside the page so it survives a refresh of the content. */}
+        <div id={ANNOUNCER_ID} role="status" aria-live="polite" className="sr-only" />
       </body>
     </html>
   );

@@ -7,6 +7,7 @@ import { Button, ChoiceGroup, ErrorSummary, StepProgress, TextAreaField, TextFie
 import { formatFromPrice, getService, jobsFor, services } from "@/data/services";
 import { site } from "@/data/site";
 import { canUseVoice } from "@/lib/speech";
+import { NO_SESSION, publishVoiceSession } from "@/lib/voice-session";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import type { Trade } from "@/types/content";
 import { submitBookingRequest } from "../actions";
@@ -29,6 +30,21 @@ import { useVoiceGuide } from "../voice-guide";
 import { BookingSummary } from "./booking-summary";
 import { ProviderPicker } from "./provider-picker";
 import { VoicePanel } from "./voice-panel";
+
+/** The form field each voice question fills in, by question key. */
+const VOICE_FIELDS: Record<string, string> = {
+  request: "trade-group",
+  job: "job-group",
+  postcode: "postcode",
+  details: "details",
+  date: "date-group",
+  slot: "slot-group",
+  name: "name",
+  phone: "phone",
+  "phone-check": "phone",
+  email: "email",
+  "email-check": "email",
+};
 
 /** Start from the saved draft, or from ?trade=…&job=… when coming from a "Book" button. */
 function initialDraft(params: URLSearchParams): Draft {
@@ -65,7 +81,7 @@ export function BookingFlow() {
   }, [draft]);
 
   // Coming from "Book by voice": put the start button under the keyboard and screen reader.
-  const wantsVoice = params.get("voice") === "1";
+  const wantsVoice = params.get("voice") === "1" || params.get("voice") === "start";
   useEffect(() => {
     if (wantsVoice) startRef.current?.focus();
   }, [wantsVoice]);
@@ -130,6 +146,45 @@ export function BookingFlow() {
   }, [days, goTo, send]);
 
   const voice = useVoiceGuide({ draft, days, reference, set, goTo, next, problem: errors[0]?.message ?? null });
+
+  // Sent here by the help assistant ("book a plumber"): start talking straight
+  // away. The visitor pressed or spoke a moment ago on this same page, so the
+  // browser still allows sound.
+  const autoVoice = params.get("voice") === "start";
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (!autoVoice || !voiceSupported || autoStarted.current) return;
+    // A moment later, so a cleanup of the guide's own effects cannot cut it off.
+    const timer = window.setTimeout(() => {
+      autoStarted.current = true;
+      void voice.start();
+    }, 50);
+    return () => window.clearTimeout(timer);
+  }, [autoVoice, voiceSupported, voice]);
+
+  // Show the conversation in the help assistant too, so it stays the one place to follow it.
+  const stepLabel = `Step ${draft.step + 1} of ${STEPS.length}: ${STEPS[draft.step]}`;
+  useEffect(() => {
+    publishVoiceSession({ status: voice.status, step: stepLabel, said: voice.said, heard: voice.heard, stop: voice.stop, resume: voice.resume });
+  }, [voice.status, voice.said, voice.heard, voice.stop, voice.resume, stepLabel]);
+  useEffect(() => () => publishVoiceSession(NO_SESSION), []);
+
+  // Mark the field the voice is asking about, so anyone watching sees where the answer goes.
+  useEffect(() => {
+    const id = VOICE_FIELDS[voice.asking];
+    const found = id ? document.getElementById(id) : null;
+    // A text box is marked with its label and hint, so the question shows too.
+    const el = found && /^(INPUT|TEXTAREA)$/.test(found.tagName) ? found.parentElement : found;
+    if (!el) return;
+    el.dataset.voiceAsking = "";
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // After the step has finished laying out, or content arriving above pushes it off screen.
+    const timer = window.setTimeout(() => el.scrollIntoView({ block: "start", behavior: still ? "auto" : "smooth" }), 300);
+    return () => {
+      window.clearTimeout(timer);
+      delete el.dataset.voiceAsking;
+    };
+  }, [voice.asking, draft.step]);
 
   const startOver = () => {
     voice.stop();

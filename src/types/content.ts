@@ -62,3 +62,17 @@ export type Review = { id: string; name: string; job: string; area: string; quot
 export type Guide = { slug: string; title: string; excerpt: string; date: string; photoAlt: string; photo?: string };
 
 export type Faq = { question: string; answer: string };
+
+/**
+ * One question the help assistant can answer. `spoken` replaces `answer` when
+ * read aloud, for words a speech voice gets wrong (phone numbers). `display`
+ * shows the larger text and high contrast switches under the answer.
+ */
+export type AssistantTopic = {
+  id: string;
+  question: string;
+  answer: string;
+  spoken?: string;
+  link?: NavLink;
+  display?: boolean;
+};

@@ -2,6 +2,7 @@
 
 import { useId, useState, useTransition } from "react";
 import { checkStatus as checkWords } from "@/features/accounts/booking-status";
+import { useConfirm } from "@/lib/use-confirm";
 import type { CheckStatus, ProviderCheck, ProviderStatus } from "@/types/accounts";
 import { approveProvider, offerBooking, setBookingStatus, setCheck, setProviderStatus, type AdminResult } from "../actions";
 
@@ -160,22 +161,24 @@ export function ProviderStatusControl({ providerId, name, status: current }: { p
 
 /** Approve a tradesperson in one step, after a second press to confirm. */
 export function ApproveProviderButton({ providerId, name }: { providerId: string; name: string }) {
-  const [confirming, setConfirming] = useState(false);
+  const { confirming, ask, back, askRef, yesRef, questionId } = useConfirm();
   const { pending, run, status } = useAction();
   return (
     <div className="grid gap-2">
       {confirming ? (
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="font-semibold">Mark every check as done and approve {name}?</span>
-          <button type="button" disabled={pending} onClick={() => run(() => approveProvider(providerId))} className={`${pill} bg-ink text-white`}>
+        <div role="group" aria-labelledby={questionId} className="flex flex-wrap items-center gap-3">
+          <span id={questionId} className="font-semibold">
+            Mark every check as done and approve {name}?
+          </span>
+          <button ref={yesRef} type="button" disabled={pending} onClick={() => run(() => approveProvider(providerId))} className={`${pill} bg-ink text-white`}>
             Yes, approve
           </button>
-          <button type="button" onClick={() => setConfirming(false)} className={`${pill} border border-line bg-white hover:border-ink`}>
+          <button type="button" onClick={back} className={`${pill} border border-line bg-white hover:border-ink`}>
             Not yet
           </button>
         </div>
       ) : (
-        <button type="button" onClick={() => setConfirming(true)} className={`${pill} w-fit bg-ink text-white`}>
+        <button ref={askRef} type="button" onClick={ask} className={`${pill} w-fit bg-ink text-white`}>
           Approve<span className="sr-only"> {name}</span>
         </button>
       )}
