@@ -17,8 +17,8 @@ export default function LoginPage() {
       title="Log in"
       lede={
         <>
-          See your bookings, or your jobs if you are a tradesperson. You do not need an account to book: you can book by voice, with the form, or
-          by calling <a href={site.phone.href} className="font-semibold underline underline-offset-4">{site.phone.display}</a>.
+          Log in to book a job and see your bookings, or your jobs if you are a tradesperson. New here? Register first. Or book by
+          calling <a href={site.phone.href} className="font-semibold underline underline-offset-4">{site.phone.display}</a>.
         </>
       }
     >

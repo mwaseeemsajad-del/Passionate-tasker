@@ -32,6 +32,9 @@ export async function submitBookingRequest(draft: Draft): Promise<SubmitResult> 
   if (!supabaseConfigured) return { ok: true, reference: `PT${Math.random().toString(36).slice(2, 7).toUpperCase()}` };
 
   const supabase = await createClient();
+  // Booking needs an account. The proxy already sends signed-out visitors from /book to /login; this is the real check.
+  const { data: claims } = await supabase.auth.getClaims();
+  if (!claims?.claims?.sub) return { ok: false, errors: [{ id: "step-title", message: "Please log in or register to send your request. Your answers are kept in this tab." }] };
   const { data, error } = await supabase.rpc("create_booking_request", {
     p_trade: draft.trade,
     p_job: draft.job,

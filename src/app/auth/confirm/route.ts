@@ -1,6 +1,8 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+import { homeFor } from "@/features/accounts/data";
 import { createClient } from "@/lib/supabase/server";
+import type { Role } from "@/types/accounts";
 
 /*
  * The link in the "confirm your email" message lands here. Exchanges the code
@@ -12,7 +14,7 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
   const next = searchParams.get("next");
   // Only paths on this site, never another host.
-  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/login";
+  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
 
   const supabase = await createClient();
   const code = searchParams.get("code");
@@ -26,5 +28,11 @@ export async function GET(request: NextRequest) {
       : { error: new Error("missing code") };
 
   if (error) return NextResponse.redirect(`${origin}/login?error=link`);
-  return NextResponse.redirect(`${origin}${safeNext}`);
+  const { data: claims } = await supabase.auth.getClaims();
+  const { data: profile } = await supabase.from("profiles").select("role, phone").eq("id", claims?.claims?.sub ?? "").maybeSingle();
+  // A new Google account has no phone yet: choose customer or tradesperson first.
+  if (profile && !profile.phone && claims?.claims?.app_metadata?.provider === "google") return NextResponse.redirect(`${origin}/welcome`);
+  if (safeNext) return NextResponse.redirect(`${origin}${safeNext}`);
+  // No ?next= (Google sign-in from the login page): go to the person's own home.
+  return NextResponse.redirect(`${origin}${homeFor((profile?.role as Role) ?? "customer")}`);
 }

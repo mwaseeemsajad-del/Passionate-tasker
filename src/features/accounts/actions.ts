@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Role } from "@/types/accounts";
+import { isPhone } from "@/features/booking/draft";
 import { homeFor } from "./data";
 import { MIN_PASSWORD, safeNext, validateLogin, validateSignUp, type FormError, type LoginInput, type SignUpInput } from "./validate";
 
@@ -64,6 +65,56 @@ export async function logIn(input: LoginInput, next?: string | null): Promise<{ 
 
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
   redirect(safeNext(next) ?? homeFor((profile?.role as Role) ?? "customer"));
+}
+
+/**
+ * Email a one-time login code. Supabase sends it through the SMTP set in the
+ * dashboard (Resend). Existing accounts only: sign-up collects name and phone.
+ * Says "sent" for unknown emails too, so the form cannot reveal who has an account.
+ */
+export async function sendLoginCode(email: string): Promise<{ ok: boolean; errors: FormError[] }> {
+  const errors = validateLogin({ email, password: "x" });
+  if (errors.length > 0) return { ok: false, errors };
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: false } });
+  if (error?.status === 429) return { ok: false, errors: [{ id: "email", message: "We sent a code a moment ago. Wait a minute, then ask for a new one." }] };
+  return { ok: true, errors: [] };
+}
+
+export async function verifyLoginCode(email: string, code: string, next?: string | null): Promise<{ ok: false; errors: FormError[] }> {
+  const token = code.replace(/\s/g, "");
+  if (!/^\d{6,10}$/.test(token)) return { ok: false, errors: [{ id: "code", message: "Enter the code from the email, like 123456" }] };
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.verifyOtp({ email: email.trim(), token, type: "email" });
+  if (error || !data.user) return { ok: false, errors: [{ id: "code", message: "That code is not right or has run out. Check the email, or ask for a new code." }] };
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
+  redirect(safeNext(next) ?? homeFor((profile?.role as Role) ?? "customer"));
+}
+
+/** Start Google sign-in. New Google accounts become customers (the profile trigger's default). */
+export async function signInWithGoogle(next?: string | null): Promise<{ ok: false; message: string }> {
+  const origin = (await headers()).get("origin") ?? "";
+  const after = safeNext(next);
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: `${origin}/auth/confirm${after ? `?next=${encodeURIComponent(after)}` : ""}` },
+  });
+  if (error || !data.url) return { ok: false, message: "Google sign-in is not available just now. Log in with your email instead." };
+  redirect(data.url);
+}
+
+/** First Google sign-in: pick customer or tradesperson and give a phone number. The database allows this once. */
+export async function finishGoogleSignup(role: string, phone: string): Promise<{ ok: false; errors: FormError[] }> {
+  const errors: FormError[] = [];
+  if (role !== "customer" && role !== "provider") errors.push({ id: "role-group", message: "Choose how you will use Passionate Taskers" });
+  if (!isPhone(phone)) errors.push({ id: "phone", message: "Enter a phone number with at least 10 digits, like 07700 900123" });
+  if (errors.length > 0) return { ok: false, errors };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("finish_google_signup", { p_role: role, p_phone: phone.trim() });
+  if (error) return { ok: false, errors: [{ id: "phone", message: "We could not save this just now. Please try again, or call us." }] };
+  redirect(afterConfirm(role as Role));
 }
 
 /** A customer cancels one of their own requests. The database checks it is theirs and not finished. */
