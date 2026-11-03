@@ -24,7 +24,7 @@ const variants: Record<Variant, string> = {
   primary: "gap-4 bg-ink py-1 pr-1 pl-[18px] text-white",
   secondary: "gap-4 bg-white py-1 pr-1 pl-[18px] text-ink ring-1 ring-white/35",
   outline: "gap-4 border border-line bg-white py-1 pr-1 pl-[18px] text-ink hover:border-ink",
-  tint: "w-full justify-center bg-accent-100 px-5 py-3.5 text-ink hover:bg-accent",
+  tint: "w-full justify-center bg-accent-100 px-5 py-3.5 text-ink hover:bg-accent hover:text-on-accent",
   inverse: "w-full justify-center bg-white px-5 py-3.5 text-ink hover:bg-accent-100",
 };
 
@@ -54,7 +54,7 @@ function ArrowBadge({ variant }: { variant: Variant }) {
       aria-hidden="true"
       className={cn(
         "grid size-9 shrink-0 place-items-center overflow-hidden rounded-full",
-        variant === "primary" ? "bg-white text-ink" : variant === "outline" ? "bg-ink text-white" : "bg-ink text-accent",
+        variant === "primary" ? "bg-white text-ink" : variant === "outline" ? "bg-ink text-white" : "bg-accent text-on-accent",
       )}
     >
       <ArrowRight

@@ -8,31 +8,36 @@
 @theme {
   --font-sans: var(--font-figtree), ui-sans-serif, system-ui, "Segoe UI", sans-serif;
 
-  /* Colour */
-  --color-ink: #0f110f;
-  --color-paper: #ffffff;
-  --color-accent: #02cd31;
-  --color-accent-50: #f0fcf3;
-  --color-accent-100: #d0f2d9;
-  --color-accent-stroke: #bde4c8;
-  --color-accent-strong: #0a8a25; /* accent as text on white: 4.6:1 */
-  --color-line: #e5ebe7;
-  --color-ink-surface: #1a1c1a;
-  --color-ink-line: #262a27;
-  --color-text-2: #353635;
-  --color-text-3: #606060;
-  --color-text-4: #8c8c8c; /* decorative only: fails contrast as text */
-  --color-danger: #b42318; /* errors: 6.5:1 on white */
-  --color-on-ink-2: #dae1dc;
+  /* Colour: dark copper theme. Old green theme kept in theme-green-backup.css.
+     The app pairs ink with white everywhere (bg-ink text-white, bg-white text-ink),
+     so on the dark page the two swap roles: ink is the cream text/fill and
+     white is the card surface. Inside `.on-dark` slabs they swap back (below). */
+  --color-ink: #f3ece3;
+  --color-white: #201c17;
+  --color-paper: #17140f;
+  --color-accent: #c87f41;
+  --color-on-accent: #1a140e;
+  --color-accent-50: #2a2319;
+  --color-accent-100: #3d2d1f;
+  --color-accent-stroke: #5a4330;
+  --color-accent-strong: #e0975a; /* accent as text and focus ring on dark */
+  --color-line: #332c24;
+  --color-ink-surface: #2a2319;
+  --color-ink-line: #463c30;
+  --color-text-2: #b9ac9c;
+  --color-text-3: #978b7a;
+  --color-text-4: #6f6558; /* decorative only: fails contrast as text */
+  --color-danger: #f97066;
+  --color-on-ink-2: #b9ac9c;
   /* Supporting tints: avatar fills and photo placeholders */
-  --color-tint-sand: #f2e3c9;
-  --color-tint-sky: #dfe4f2;
-  --color-tint-rose: #f2d6d0;
-  --color-mist: #dfe7e1;
-  --color-sage: #cfd9d2;
-  --color-moss: #34423a;
-  --color-moss-deep: #1a211c;
-  --color-on-ink-3: #8f9891; /* lifted from #7d857f so it passes 4.5:1 on ink-surface cards too */
+  --color-tint-sand: #3a2e20;
+  --color-tint-sky: #262a33;
+  --color-tint-rose: #3a2522;
+  --color-mist: #2a2319;
+  --color-sage: #332c24;
+  --color-moss: #2a2319;
+  --color-moss-deep: #17140f;
+  --color-on-ink-3: #978b7a;
 
   /* Breakpoints (Design.md section 8: 479 / 767 / 991 / 1280) */
   --breakpoint-sm: 30rem;
@@ -82,19 +87,33 @@
   font-size: 125%;
 }
 
+/* Dark slabs (Section tone="dark", footer, featured cards): ink is the slab
+   surface again and white is the cream text, so the light-theme pairings hold. */
+.on-dark {
+  --color-ink: #201c17;
+  --color-white: #f3ece3;
+}
+
 :root[data-contrast="high"] {
-  --color-text-2: #0f110f;
-  --color-text-3: #0f110f;
-  --color-line: #0f110f;
-  --color-accent-stroke: #0f110f;
-  --color-accent-50: #ffffff;
-  --color-accent-strong: #056b1b;
-  --color-mist: #ffffff;
-  --color-sage: #ffffff;
+  --color-ink: #ffffff;
+  --color-white: #000000;
+  --color-paper: #000000;
+  --color-text-2: #ffffff;
+  --color-text-3: #ffffff;
+  --color-line: #ffffff;
+  --color-accent-stroke: #ffffff;
+  --color-accent-50: #000000;
+  --color-accent-strong: #f0b07a;
+  --color-mist: #000000;
+  --color-sage: #000000;
   --color-on-ink-2: #ffffff;
   --color-on-ink-3: #ffffff;
   --color-ink-line: #ffffff;
   --color-ink-surface: #000000;
+}
+:root[data-contrast="high"] .on-dark {
+  --color-ink: #000000;
+  --color-white: #ffffff;
 }
 
 /* Unlayered on purpose, so these win over Tailwind utilities. */
@@ -114,6 +133,7 @@
 
 @layer base {
   html {
+    color-scheme: dark;
     scroll-behavior: smooth;
     interpolate-size: allow-keywords;
   }
@@ -131,12 +151,9 @@
     letter-spacing: -0.01em;
   }
 
-  /* Focus: ink ring on light surfaces, green ring on dark ones (green fails on white). */
+  /* Focus: light copper ring, passes 3:1 on the page, cards and dark slabs. */
   :focus-visible {
-    @apply rounded-[4px] outline-2 outline-offset-2 outline-ink;
-  }
-  .on-dark :focus-visible {
-    @apply outline-accent;
+    @apply rounded-[4px] outline-2 outline-offset-2 outline-accent-strong;
   }
 
   /* The field voice booking is asking about. Dashed and tinted, so it never

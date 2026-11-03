@@ -35,7 +35,7 @@ export function VoicePanel({ status, said, heard, supported, onStart, onStop, on
   return (
     <section aria-labelledby="voice-title" className="on-dark grid gap-5 rounded-xl bg-ink p-6 text-white sm:p-8">
       <div className="flex items-start gap-4">
-        <span aria-hidden="true" className="grid size-12 shrink-0 place-items-center rounded-full bg-accent text-ink">
+        <span aria-hidden="true" className="grid size-12 shrink-0 place-items-center rounded-full bg-accent text-on-accent">
           <Mic className="size-6" strokeWidth={1.75} />
         </span>
         <div className="grid gap-1.5">
@@ -57,7 +57,7 @@ export function VoicePanel({ status, said, heard, supported, onStart, onStop, on
                 <button
                   type="button"
                   onClick={onSkip}
-                  className="inline-flex min-h-14 cursor-pointer items-center justify-center gap-3 rounded-full bg-accent px-6 text-h4 font-semibold text-ink"
+                  className="inline-flex min-h-14 cursor-pointer items-center justify-center gap-3 rounded-full bg-accent px-6 text-h4 font-semibold text-on-accent"
                 >
                   <Mic aria-hidden="true" className="size-5" strokeWidth={2} />
                   Answer now
@@ -67,7 +67,7 @@ export function VoicePanel({ status, said, heard, supported, onStart, onStop, on
                 <button
                   type="button"
                   onClick={onResume}
-                  className="inline-flex min-h-14 cursor-pointer items-center justify-center gap-3 rounded-full bg-accent px-6 text-h4 font-semibold text-ink"
+                  className="inline-flex min-h-14 cursor-pointer items-center justify-center gap-3 rounded-full bg-accent px-6 text-h4 font-semibold text-on-accent"
                 >
                   <Mic aria-hidden="true" className="size-5" strokeWidth={2} />
                   Carry on
@@ -87,7 +87,7 @@ export function VoicePanel({ status, said, heard, supported, onStart, onStop, on
               ref={startRef}
               type="button"
               onClick={onStart}
-              className="inline-flex min-h-14 w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-accent px-6 text-h4 font-semibold text-ink transition-colors hover:bg-accent-100 sm:w-auto sm:justify-self-start"
+              className="inline-flex min-h-14 w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-accent px-6 text-h4 font-semibold text-on-accent transition-colors hover:bg-accent-100 sm:w-auto sm:justify-self-start"
             >
               <Mic aria-hidden="true" className="size-5" strokeWidth={2} />
               {said ? "Carry on by voice" : "Start voice booking"}
@@ -129,7 +129,7 @@ export function VoicePanel({ status, said, heard, supported, onStart, onStop, on
                 </p>
               )}
               {heard && (
-                <p className="text-body text-accent-100">
+                <p className="text-body text-accent-strong">
                   <span className="text-on-ink-3">We heard: </span>
                   {heard}
                 </p>
