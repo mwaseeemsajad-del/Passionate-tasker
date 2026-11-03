@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
  *
  * tone="light": paper background.
  * tone="dark":  an ink slab with large rounded corners that floats off the
- *               page edge. Adds `on-dark`, which switches focus rings to green.
+ *               page edge. Adds `on-dark`, which swaps ink and white back to the dark slab pairing.
  * density="dense": tighter vertical padding (logos strip, How it works).
  * flush="top" | "bottom" | "both": drop the padding on that side, for sections
  *               that follow one another without a gap.

@@ -14,7 +14,7 @@ export function MetricCard({ icon: Icon, label, value, hint, href, tone = "plain
   const body = (
     <>
       <div className="flex items-center justify-between gap-3">
-        <span aria-hidden="true" className={cn("grid size-10 place-items-center rounded-full", alert ? "bg-ink text-accent" : "bg-accent-100 text-ink")}>
+        <span aria-hidden="true" className={cn("grid size-10 place-items-center rounded-full", alert ? "bg-accent text-on-accent" : "bg-accent-100 text-ink")}>
           <Icon className="size-5" strokeWidth={1.5} />
         </span>
         {href && <ArrowRight aria-hidden="true" className="size-5 text-text-3 transition-transform group-hover:translate-x-1 motion-reduce:transition-none" strokeWidth={1.5} />}

@@ -23,7 +23,7 @@ export function ListTabs({ tabs, current, label }: { tabs: ListTab[]; current: s
               )}
             >
               {t.label}
-              <span className={cn("rounded-full px-2 text-sm font-semibold", t.id === current ? "bg-accent text-ink" : "bg-accent-100")}>{t.count}</span>
+              <span className={cn("rounded-full px-2 text-sm font-semibold", t.id === current ? "bg-accent text-on-accent" : "bg-accent-100")}>{t.count}</span>
             </Link>
           </li>
         ))}

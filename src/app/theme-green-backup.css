@@ -1,0 +1,58 @@
+/*
+ * BACKUP: the original light theme (charcoal + green), replaced on 2026-11-03
+ * by the dark copper theme in globals.css. Not imported anywhere.
+ *
+ * To restore: paste the @theme colour block over the "Colour" block in
+ * globals.css, replace the high-contrast block, delete the `.on-dark` token
+ * block there, set `--color-white` back (remove it), restore the focus rules
+ * below, and set the old hex values in layout.tsx (themeColor "#0f110f") and
+ * opengraph-image.tsx (INK #0f110f, ACCENT #02cd31, PAPER #ffffff).
+ * Components that were switched to `text-on-accent` used `text-ink`.
+ */
+
+@theme {
+  --color-ink: #0f110f;
+  --color-paper: #ffffff;
+  --color-accent: #02cd31;
+  --color-accent-50: #f0fcf3;
+  --color-accent-100: #d0f2d9;
+  --color-accent-stroke: #bde4c8;
+  --color-accent-strong: #0a8a25; /* accent as text on white: 4.6:1 */
+  --color-line: #e5ebe7;
+  --color-ink-surface: #1a1c1a;
+  --color-ink-line: #262a27;
+  --color-text-2: #353635;
+  --color-text-3: #606060;
+  --color-text-4: #8c8c8c; /* decorative only: fails contrast as text */
+  --color-danger: #b42318; /* errors: 6.5:1 on white */
+  --color-on-ink-2: #dae1dc;
+  --color-tint-sand: #f2e3c9;
+  --color-tint-sky: #dfe4f2;
+  --color-tint-rose: #f2d6d0;
+  --color-mist: #dfe7e1;
+  --color-sage: #cfd9d2;
+  --color-moss: #34423a;
+  --color-moss-deep: #1a211c;
+  --color-on-ink-3: #8f9891;
+}
+
+:root[data-contrast="high"] {
+  --color-text-2: #0f110f;
+  --color-text-3: #0f110f;
+  --color-line: #0f110f;
+  --color-accent-stroke: #0f110f;
+  --color-accent-50: #ffffff;
+  --color-accent-strong: #056b1b;
+  --color-mist: #ffffff;
+  --color-sage: #ffffff;
+  --color-on-ink-2: #ffffff;
+  --color-on-ink-3: #ffffff;
+  --color-ink-line: #ffffff;
+  --color-ink-surface: #000000;
+}
+
+/* Old focus rules (inside @layer base):
+  :focus-visible { @apply rounded-[4px] outline-2 outline-offset-2 outline-ink; }
+  .on-dark :focus-visible { @apply outline-accent; }
+  timeline.tsx dot shadow: rgb(2_205_49/0.18)
+*/

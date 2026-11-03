@@ -6,7 +6,7 @@ import { site } from "@/data/site";
 export function Logo({ tone = "light", className }: { tone?: "light" | "dark"; className?: string }) {
   return (
     <Link href="/" className={cn("flex items-center gap-2.5 text-[1.1875rem] font-semibold", tone === "dark" ? "text-white" : "text-ink", className)}>
-      <span aria-hidden="true" className="grid size-[34px] place-items-center rounded-[10px] bg-accent text-sm font-bold text-ink">
+      <span aria-hidden="true" className="grid size-[34px] place-items-center rounded-[10px] bg-accent text-sm font-bold text-on-accent">
         {site.shortName}
       </span>
       {site.name}

@@ -20,7 +20,7 @@ export function Timeline({ children }: { children: ReactNode }) {
         className="absolute top-2 bottom-2 left-[7px] w-0.5 origin-top bg-accent"
         style={{ scaleY: reduce ? 1 : scrollYProgress }}
       />
-      <span aria-hidden="true" className="absolute top-0 left-0 size-4 rounded-full bg-accent shadow-[0_0_0_5px_rgb(2_205_49/0.18)]" />
+      <span aria-hidden="true" className="absolute top-0 left-0 size-4 rounded-full bg-accent shadow-[0_0_0_5px_rgb(200_127_65/0.22)]" />
       {children}
     </div>
   );

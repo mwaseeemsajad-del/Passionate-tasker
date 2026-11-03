@@ -4,9 +4,9 @@ import { site } from "@/data/site";
 // The picture shown when a link to the site is shared. ImageResponse cannot
 // read CSS variables, so the brand colours are repeated here from globals.css
 // (--color-ink, --color-accent, --color-paper).
-const INK = "#0f110f";
-const ACCENT = "#02cd31";
-const PAPER = "#ffffff";
+const INK = "#17140f";
+const ACCENT = "#c87f41";
+const PAPER = "#f3ece3";
 
 export const alt = `${site.name}: ${site.tagline}`;
 export const size = { width: 1200, height: 630 };
