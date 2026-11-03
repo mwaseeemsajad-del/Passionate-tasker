@@ -14,11 +14,11 @@ export const helpTopics: HelpTopic[] = [
     title: "Booking a job",
     items: [
       { question: "How do I book?", answer: "Choose a job on a service page, fill in the short booking form, or press Book by voice and answer one question at a time. It takes about two minutes. You can also call us and we will book it for you." },
-      { question: "Do I need an account to book?", answer: "No. You can book without one. With a free account you can see every booking you have made and where it is up to, and cancel a request online." },
+      { question: "Do I need an account to book?", answer: "Yes, a free account. Register with your email or Google, then book online or by voice. Your account shows every booking you have made and where it is up to, and lets you cancel a request online. If you would rather not use the website, call us and we will book it for you." },
       { question: "What happens after I send a request?", answer: "A real person from our team calls you on the number you gave. We go through the job, agree the price and the time with you, and then arrange a checked tradesperson. We tell you their name before they arrive." },
       { question: "Can I choose who comes?", answer: "Yes. When you book, you see the checked tradespeople for your job, nearest first, and can choose one. Or leave it to us: we send the nearest checked tradesperson who is free. If the person you chose cannot come, we offer the job to the next nearest and tell you." },
       { question: "How soon can someone come?", answer: "You choose a day in the next four weeks and a time of day: morning, afternoon or evening. We confirm the exact time when we call." },
-      { question: "How do I change or cancel a booking?", answer: `If you have an account, you can cancel a request from your account page. To change one, or if you booked without an account, call us on ${site.phone.display}.` },
+      { question: "How do I change or cancel a booking?", answer: `You can cancel a request from your account page. To change one, or if we booked it for you by phone, call us on ${site.phone.display}.` },
     ],
   },
   {

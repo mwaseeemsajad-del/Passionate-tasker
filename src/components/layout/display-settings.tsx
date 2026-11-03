@@ -35,6 +35,8 @@ export function DisplayToggles({ idPrefix }: { idPrefix: string }) {
  */
 export function DisplayMenu({ bordered = false }: { bordered?: boolean }) {
   const [open, setOpen] = useState(false);
+  // Open towards the side with more room: at high zoom the nav wraps and the button sits at the left edge.
+  const [alignLeft, setAlignLeft] = useState(false);
   const panelId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -65,7 +67,11 @@ export function DisplayMenu({ bordered = false }: { bordered?: boolean }) {
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          const r = buttonRef.current?.getBoundingClientRect();
+          if (r) setAlignLeft(window.innerWidth - r.left > r.right);
+          setOpen((v) => !v);
+        }}
         className={cn(
           "inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full bg-white px-4 text-base font-medium text-ink",
           bordered && "border border-line",
@@ -79,7 +85,10 @@ export function DisplayMenu({ bordered = false }: { bordered?: boolean }) {
         hidden={!open}
         role="group"
         aria-label="Display settings"
-        className="absolute top-[calc(100%+12px)] right-0 z-30 w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-line bg-white p-5 text-ink shadow-[0_12px_40px_-12px_rgb(15_17_15/0.35)]"
+        className={cn(
+          "absolute top-[calc(100%+12px)] z-30 w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-line bg-white p-5 text-ink shadow-[0_12px_40px_-12px_rgb(15_17_15/0.35)]",
+          alignLeft ? "left-0" : "right-0",
+        )}
       >
         <DisplayToggles idPrefix="menu" />
         <p className="mt-4 border-t border-line pt-4 text-[0.9375rem] text-text-3">

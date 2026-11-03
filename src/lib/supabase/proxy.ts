@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_KEY, SUPABASE_URL, supabaseConfigured } from "./env";
 
 /** Pages that need a signed-in account. */
-const PROTECTED = ["/account", "/provider", "/admin"];
+const PROTECTED = ["/account", "/provider", "/admin", "/book", "/welcome"];
 
 /**
  * Runs before every page: refreshes the Supabase session cookies, and sends
