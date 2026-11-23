@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { requireRole } from "@/features/accounts/data";
+import { BOOKING_COLUMNS, emailBookingCancelled, type BookingRow } from "@/features/booking/emails";
 import { createClient } from "@/lib/supabase/server";
 import type { CheckStatus, ProviderStatus } from "@/types/accounts";
 
@@ -28,7 +30,13 @@ export async function offerBooking(bookingId: string, providerId: string) {
 }
 
 export async function setBookingStatus(bookingId: string, status: "new" | "cancelled" | "completed") {
-  return call("admin_set_booking_status", { p_booking: bookingId, p_status: status }, "Could not change this request");
+  const result = await call("admin_set_booking_status", { p_booking: bookingId, p_status: status }, "Could not change this request");
+  if (result.ok && status === "cancelled") {
+    const supabase = await createClient();
+    const { data: booking } = await supabase.from("booking_requests").select(BOOKING_COLUMNS).eq("id", bookingId).maybeSingle<BookingRow>();
+    if (booking) after(() => emailBookingCancelled(booking, "team"));
+  }
+  return result;
 }
 
 export async function setCheck(checkId: string, status: CheckStatus, note: string, expiresOn: string) {

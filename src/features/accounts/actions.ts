@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Role } from "@/types/accounts";
 import { isPhone } from "@/features/booking/draft";
+import { BOOKING_COLUMNS, emailBookingCancelled, type BookingRow } from "@/features/booking/emails";
 import { homeFor } from "./data";
 import { MIN_PASSWORD, safeNext, validateLogin, validateSignUp, type FormError, type LoginInput, type SignUpInput } from "./validate";
 
@@ -122,6 +124,8 @@ export async function cancelBooking(bookingId: string): Promise<{ ok: boolean; m
   const supabase = await createClient();
   const { error } = await supabase.rpc("cancel_booking", { p_booking: bookingId });
   if (error) return { ok: false, message: "This request can no longer be cancelled online. Please call us." };
+  const { data: booking } = await supabase.from("booking_requests").select(BOOKING_COLUMNS).eq("id", bookingId).maybeSingle<BookingRow>();
+  if (booking) after(() => emailBookingCancelled(booking, "customer"));
   revalidatePath("/account");
   return { ok: true };
 }

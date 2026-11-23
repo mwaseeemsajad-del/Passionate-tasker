@@ -1,9 +1,11 @@
 "use server";
 
+import { after } from "next/server";
 import { site } from "@/data/site";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { DAYS_AHEAD, formatPostcode, upcomingDays, validateStep, type Draft, type FieldError } from "./draft";
+import { emailBookingPlaced } from "./emails";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -15,8 +17,8 @@ export type SubmitResult = { ok: true; reference: string } | { ok: false; errors
  *
  * Saved in Supabase through the `create_booking_request` function, which
  * links it to the customer's account when they are signed in. The team sees
- * new requests in the `booking_requests` table.
- * TODO(input N2): email the team about each new request.
+ * new requests in the `booking_requests` table, and by email (Resend) when
+ * BOOKING_TEAM_EMAIL is set. The customer gets a confirmation email too.
  */
 export async function submitBookingRequest(draft: Draft): Promise<SubmitResult> {
   // One day either side, so a request sent just before midnight in another
@@ -35,6 +37,8 @@ export async function submitBookingRequest(draft: Draft): Promise<SubmitResult> 
   // Booking needs an account. The proxy already sends signed-out visitors from /book to /login; this is the real check.
   const { data: claims } = await supabase.auth.getClaims();
   if (!claims?.claims?.sub) return { ok: false, errors: [{ id: "step-title", message: "Please log in or register to send your request. Your answers are kept in this tab." }] };
+  // The form's email, or the account's: saved on the request so every later email reaches them.
+  const email = draft.email.trim() || String(claims.claims.email ?? "");
   const { data, error } = await supabase.rpc("create_booking_request", {
     p_trade: draft.trade,
     p_job: draft.job,
@@ -44,7 +48,7 @@ export async function submitBookingRequest(draft: Draft): Promise<SubmitResult> 
     p_slot: draft.slot,
     p_name: draft.name,
     p_phone: draft.phone,
-    p_email: draft.email,
+    p_email: email,
     // The customer's choice, if any. The database checks they are approved for this trade,
     // and otherwise matches automatically.
     p_provider: UUID.test(draft.provider) ? draft.provider : null,
@@ -56,5 +60,8 @@ export async function submitBookingRequest(draft: Draft): Promise<SubmitResult> 
       : "We could not send your request just now. Please try again, or call us and we will book it for you.";
     return { ok: false, errors: [{ id: "step-title", message }] };
   }
+  const booking = { ...draft, reference: data, postcode: formatPostcode(draft.postcode), preferred_date: draft.date, email };
+  // Sent after the reply, so a slow or failed email never holds up or loses the booking.
+  after(() => emailBookingPlaced(booking, draft.providerName));
   return { ok: true, reference: data };
 }
