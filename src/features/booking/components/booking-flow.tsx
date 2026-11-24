@@ -64,6 +64,8 @@ export function BookingFlow() {
   const [draft, setDraft] = useState<Draft>(() => initialDraft(params));
   const [errors, setErrors] = useState<FieldError[]>([]);
   const [reference, setReference] = useState<string | null>(null);
+  // Came here from "Change" on the check page: Continue goes straight back there.
+  const [editing, setEditing] = useState(false);
   const [sending, startSending] = useTransition();
   // This component only renders in the browser (useSearchParams under Suspense), so speech support can be read directly.
   const [voiceSupported] = useState(canUseVoice);
@@ -141,9 +143,13 @@ export function BookingFlow() {
       setErrors(problems);
       return;
     }
-    if (d.step < STEPS.length - 1) goTo(d.step + 1);
+    const last = STEPS.length - 1;
+    if (editing && d.step < last) {
+      setEditing(false);
+      goTo(last);
+    } else if (d.step < last) goTo(d.step + 1);
     else send(d);
-  }, [days, goTo, send]);
+  }, [days, editing, goTo, send]);
 
   const voice = useVoiceGuide({ draft, days, reference, set, goTo, next, problem: errors[0]?.message ?? null });
 
@@ -190,6 +196,7 @@ export function BookingFlow() {
     voice.stop();
     clearDraft();
     setReference(null);
+    setEditing(false);
     focusTarget.current = "heading";
     setDraft(EMPTY_DRAFT);
   };
@@ -354,16 +361,22 @@ export function BookingFlow() {
               </>
             )}
 
-            {draft.step === 3 && <Review draft={draft} days={days} onChange={goTo} />}
+            {draft.step === 3 && <Review draft={draft} days={days} onChange={(step) => {
+              setEditing(true);
+              goTo(step);
+            }} />}
 
             <div className="flex flex-wrap items-center gap-4 border-t border-line pt-6">
               <Button type="submit" disabled={sending}>
-                {draft.step < STEPS.length - 1 ? "Continue" : sending ? "Sending…" : "Send booking request"}
+                {editing && draft.step < STEPS.length - 1 ? "Save and go back to check" : draft.step < STEPS.length - 1 ? "Continue" : sending ? "Sending…" : "Send booking request"}
               </Button>
               {draft.step > 0 && (
                 <button
                   type="button"
-                  onClick={() => goTo(draft.step - 1)}
+                  onClick={() => {
+                    setEditing(false);
+                    goTo(draft.step - 1);
+                  }}
                   className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full px-4 font-medium underline-offset-4 hover:underline"
                 >
                   <ArrowLeft aria-hidden="true" className="size-4" strokeWidth={1.75} />
