@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Role } from "@/types/accounts";
 import { isPhone } from "@/features/booking/draft";
+import { BOOKING_COLUMNS, emailBookingCancelled, type BookingRow } from "@/features/booking/emails";
 import { homeFor } from "./data";
 import { MIN_PASSWORD, safeNext, validateLogin, validateSignUp, type FormError, type LoginInput, type SignUpInput } from "./validate";
 
@@ -122,6 +124,8 @@ export async function cancelBooking(bookingId: string): Promise<{ ok: boolean; m
   const supabase = await createClient();
   const { error } = await supabase.rpc("cancel_booking", { p_booking: bookingId });
   if (error) return { ok: false, message: "This request can no longer be cancelled online. Please call us." };
+  const { data: booking } = await supabase.from("booking_requests").select(BOOKING_COLUMNS).eq("id", bookingId).maybeSingle<BookingRow>();
+  if (booking) after(() => emailBookingCancelled(booking, "customer"));
   revalidatePath("/account");
   return { ok: true };
 }
@@ -155,4 +159,11 @@ export async function updatePassword(password: string): Promise<{ ok: false; err
   if (error) return { ok: false, errors: [{ id: "password", message: "Choose a different password, at least 8 characters with letters and numbers" }] };
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", claims.claims.sub).maybeSingle();
   redirect(homeFor((profile?.role as Role) ?? "customer"));
+}
+
+/** The bell's "Mark all as read". Row Level Security limits it to the person's own. */
+export async function markNotificationsRead() {
+  const supabase = await createClient();
+  await supabase.from("notifications").update({ read_at: new Date().toISOString() }).is("read_at", null);
+  revalidatePath("/", "layout");
 }

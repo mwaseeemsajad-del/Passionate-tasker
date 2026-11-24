@@ -1,6 +1,7 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { SUPABASE_KEY, SUPABASE_URL } from "./env";
 
 /**
@@ -9,6 +10,8 @@ import { SUPABASE_KEY, SUPABASE_URL } from "./env";
  */
 export async function createClient() {
   const cookieStore = await cookies();
+  // Session checks read the clock (token expiry), which a runtime prefetch may not do. Wait for the real request.
+  await connection();
   return createServerClient(SUPABASE_URL, SUPABASE_KEY, {
     cookies: {
       getAll: () => cookieStore.getAll(),
