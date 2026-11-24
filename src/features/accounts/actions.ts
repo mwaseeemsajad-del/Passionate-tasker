@@ -160,3 +160,10 @@ export async function updatePassword(password: string): Promise<{ ok: false; err
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", claims.claims.sub).maybeSingle();
   redirect(homeFor((profile?.role as Role) ?? "customer"));
 }
+
+/** The bell's "Mark all as read". Row Level Security limits it to the person's own. */
+export async function markNotificationsRead() {
+  const supabase = await createClient();
+  await supabase.from("notifications").update({ read_at: new Date().toISOString() }).is("read_at", null);
+  revalidatePath("/", "layout");
+}

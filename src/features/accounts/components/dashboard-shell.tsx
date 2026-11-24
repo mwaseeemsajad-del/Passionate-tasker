@@ -1,7 +1,8 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Navbar } from "@/components/layout/navbar";
 import { Container } from "@/components/ui";
 import { DashboardNav, type DashboardNavItem } from "./dashboard-nav";
+import { NotificationBell } from "./notification-bell";
 
 /*
  * The frame of every dashboard: the site header, then the dashboard's own
@@ -13,7 +14,13 @@ export function DashboardShell({ nav, navLabel, children }: { nav: DashboardNavI
     <>
       <Navbar variant="solid" />
       <Container className="grid items-start gap-8 pt-6 pb-16 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-12 lg:pt-10">
-        <DashboardNav items={nav} label={navLabel} />
+        <div className="grid gap-3 lg:sticky lg:top-6">
+          {/* Reads the session, so it streams in at request time. */}
+          <Suspense fallback={null}>
+            <NotificationBell />
+          </Suspense>
+          <DashboardNav items={nav} label={navLabel} />
+        </div>
         <main id="main" tabIndex={-1} className="min-w-0 outline-none">
           {children}
         </main>
