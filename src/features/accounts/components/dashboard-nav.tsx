@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BadgeCheck, Briefcase, CalendarDays, CircleHelp, Inbox, LayoutDashboard, LogOut, Plus, UserRound, Users } from "lucide-react";
+import { BadgeCheck, Briefcase, CalendarDays, CircleHelp, Inbox, LayoutDashboard, LogOut, Plus, ShieldCheck, UserRound, Users } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { logOut } from "../actions";
 
@@ -49,6 +49,12 @@ export function DashboardNav({ items, label }: { items: DashboardNavItem[]; labe
           );
         })}
         <li className="lg:mt-4 lg:border-t lg:border-line lg:pt-4">
+          <Link href="/security" className={cn(item, idle)}>
+            <ShieldCheck aria-hidden="true" className="size-5 shrink-0" strokeWidth={1.5} />
+            Two-step sign-in
+          </Link>
+        </li>
+        <li>
           <Link href="/help" className={cn(item, idle)}>
             <CircleHelp aria-hidden="true" className="size-5 shrink-0" strokeWidth={1.5} />
             Help

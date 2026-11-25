@@ -35,6 +35,12 @@ export async function requireRole(role: Role): Promise<Viewer> {
   const viewer = await getViewer();
   if (!viewer) redirect(`/login?next=${homeFor(role)}`);
   if (viewer.role !== role) redirect(homeFor(viewer.role));
+  // The team's pages need two-step sign-in; the database refuses admin powers without it too (is_admin, 0011).
+  if (role === "admin") {
+    const supabase = await createClient();
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.currentLevel !== "aal2") redirect(aal?.nextLevel === "aal2" ? "/mfa?next=/admin" : "/security?required=1");
+  }
   return viewer;
 }
 
@@ -76,27 +82,57 @@ export async function getProviderBookings(providerId: string): Promise<BookingRe
 export async function getProviderProfile(providerId: string): Promise<ProviderProfile | null> {
   const supabase = await createClient();
   const { data: r } = await supabase.from("provider_profiles").select("*").eq("id", providerId).maybeSingle();
-  if (!r) return null;
-  return {
-    id: r.id,
-    trades: r.trades ?? [],
-    postcode: r.postcode,
-    gasSafe: r.gas_safe,
-    electricalScheme: r.electrical_scheme,
-    about: r.about,
-    onboardingStep: r.onboarding_step,
-    onboardedAt: r.onboarded_at,
-    status: r.status,
-  };
+  return r ? toProfile(r) : null;
 }
 
 export async function getProviderChecks(providerId: string): Promise<ProviderCheck[]> {
   const supabase = await createClient();
-  const { data } = await supabase.from("provider_checks").select("id, kind, status, note, expires_on").eq("provider_id", providerId);
-  const order = ["identity", "dbs", "insurance", "gas-safe", "electrical"];
-  return (data ?? [])
-    .map((c) => ({ id: c.id, kind: c.kind, status: c.status, note: c.note, expiresOn: c.expires_on }))
-    .sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
+  const [{ data }, { data: docs }] = await Promise.all([
+    supabase.from("provider_checks").select("id, provider_id, kind, status, note, expires_on").eq("provider_id", providerId),
+    supabase.rpc("list_provider_documents"),
+  ]);
+  return toChecks(data ?? [], (docs ?? []) as DocRow[]);
+}
+
+type Row = Record<string, unknown>;
+type DocRow = { provider_id: string; kind: string; path: string; file_name: string; uploaded_at: string };
+const CHECK_ORDER = ["identity", "business", "dbs", "insurance", "gas-safe", "electrical"];
+
+function toProfile(r: Row): ProviderProfile {
+  return {
+    id: r.id as string,
+    trades: (r.trades as ProviderProfile["trades"]) ?? [],
+    postcode: r.postcode as string,
+    gasSafe: r.gas_safe as string,
+    electricalScheme: r.electrical_scheme as string,
+    about: r.about as string,
+    businessType: (r.business_type as ProviderProfile["businessType"]) ?? "",
+    businessName: (r.business_name as string) ?? "",
+    companyNumber: (r.company_number as string) ?? "",
+    businessAddress: (r.business_address as string) ?? "",
+    languages: (r.languages as string[]) ?? ["English"],
+    availableDays: (r.available_days as number[]) ?? [1, 2, 3, 4, 5, 6, 7],
+    availableSlots: (r.available_slots as ProviderProfile["availableSlots"]) ?? ["morning", "afternoon", "evening"],
+    onboardingStep: r.onboarding_step as number,
+    onboardedAt: r.onboarded_at as string | null,
+    status: r.status as ProviderProfile["status"],
+  };
+}
+
+/** Checks in the order the site lists them, each with the documents sent for it. */
+function toChecks(rows: Row[], docs: DocRow[]): ProviderCheck[] {
+  return rows
+    .map((c) => ({
+      id: c.id as string,
+      kind: c.kind as ProviderCheck["kind"],
+      status: c.status as ProviderCheck["status"],
+      note: c.note as string,
+      expiresOn: c.expires_on as string | null,
+      documents: docs
+        .filter((d) => d.provider_id === c.provider_id && d.kind === c.kind)
+        .map((d) => ({ path: d.path, fileName: d.file_name, uploadedAt: d.uploaded_at })),
+    }))
+    .sort((a, b) => CHECK_ORDER.indexOf(a.kind) - CHECK_ORDER.indexOf(b.kind));
 }
 
 /* ---- The team's view. Row Level Security only returns these rows to admins. ---- */
@@ -108,33 +144,28 @@ export async function getAllBookings(): Promise<(BookingRequest & { providerId: 
   return (data ?? []).map((r) => ({ ...toBooking(r), providerId: r.provider_id as string | null }));
 }
 
-/** Every tradesperson with their contact details and checks. */
+/** Every tradesperson with their contact details, checks, documents and history. */
 export async function getAllProviders(): Promise<ProviderSummary[]> {
   const supabase = await createClient();
-  const [{ data: profiles }, { data: people }, { data: checks }] = await Promise.all([
+  const [{ data: profiles }, { data: people }, { data: checks }, { data: docs }, { data: audit }] = await Promise.all([
     supabase.from("provider_profiles").select("*").order("created_at", { ascending: false }),
-    supabase.from("profiles").select("id, full_name, phone").eq("role", "provider"),
+    supabase.from("profiles").select("id, full_name, phone, role"),
     supabase.from("provider_checks").select("id, provider_id, kind, status, note, expires_on"),
+    supabase.rpc("list_provider_documents"),
+    supabase.from("audit_log").select("actor_id, action, target_id, created_at").order("created_at", { ascending: false }).limit(1000),
   ]);
-  const order = ["identity", "dbs", "insurance", "gas-safe", "electrical"];
+  const nameOf = (id: unknown) => (id ? (people ?? []).find((p) => p.id === id)?.full_name || "Someone on the team" : "Automatic (expiry)");
   return (profiles ?? []).map((r) => {
     const person = (people ?? []).find((p) => p.id === r.id);
     return {
-      id: r.id,
-      trades: r.trades ?? [],
-      postcode: r.postcode,
-      gasSafe: r.gas_safe,
-      electricalScheme: r.electrical_scheme,
-      about: r.about,
-      onboardingStep: r.onboarding_step,
-      onboardedAt: r.onboarded_at,
-      status: r.status,
+      ...toProfile(r),
       fullName: person?.full_name ?? "",
       phone: person?.phone ?? "",
-      checks: (checks ?? [])
-        .filter((c) => c.provider_id === r.id)
-        .map((c) => ({ id: c.id, kind: c.kind, status: c.status, note: c.note, expiresOn: c.expires_on }))
-        .sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind)),
+      checks: toChecks((checks ?? []).filter((c) => c.provider_id === r.id), (docs ?? []) as DocRow[]),
+      history: (audit ?? [])
+        .filter((a) => a.target_id === r.id)
+        .slice(0, 10)
+        .map((a) => ({ action: a.action as string, actorName: a.actor_id === r.id ? "Themselves" : nameOf(a.actor_id), createdAt: a.created_at as string })),
     };
   });
 }

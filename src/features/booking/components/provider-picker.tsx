@@ -11,13 +11,13 @@ import { listProviders, type ProviderOption } from "../providers";
  * Below it, the approved tradespeople for this trade, nearest first.
  * A tradesperson's choice is remembered only if they are still on the list.
  */
-export function ProviderPicker({ trade, postcode, value, onChange }: { trade: Trade | ""; postcode: string; value: string; onChange: (id: string, name: string) => void }) {
+export function ProviderPicker({ trade, postcode, date, slot, value, onChange }: { trade: Trade | ""; postcode: string; date: string; slot: string; value: string; onChange: (id: string, name: string) => void }) {
   const [options, setOptions] = useState<ProviderOption[] | null>(null);
 
   useEffect(() => {
     if (!trade) return;
     let alive = true;
-    listProviders(trade, postcode)
+    listProviders(trade, postcode, date, slot)
       .then((list) => {
         if (!alive) return;
         setOptions(list);
@@ -27,16 +27,16 @@ export function ProviderPicker({ trade, postcode, value, onChange }: { trade: Tr
     return () => {
       alive = false;
     };
-    // Only refetch when the trade or area changes; `value` and `onChange` are read once per fetch.
+    // Only refetch when the trade, area, day or time changes; `value` and `onChange` are read once per fetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trade, postcode]);
+  }, [trade, postcode, date, slot]);
 
   const choices = [
     { value: "", label: "Let us choose for me", detail: "We send the nearest checked tradesperson who is free. This is the quickest." },
     ...(options ?? []).map((p) => ({
       value: p.id,
       label: p.name,
-      detail: [p.area && `${p.area} area`, `${p.jobsDone} ${p.jobsDone === 1 ? "job" : "jobs"} done with us`, p.registered, p.about].filter(Boolean).join(" · "),
+      detail: [p.area && `${p.area} area`, `${p.jobsDone} ${p.jobsDone === 1 ? "job" : "jobs"} done with us`, p.registered, p.languages.length > 1 || (p.languages[0] && p.languages[0] !== "English") ? `Speaks ${p.languages.join(", ")}` : "", p.about].filter(Boolean).join(" · "),
     })),
   ];
 
@@ -50,7 +50,7 @@ export function ProviderPicker({ trade, postcode, value, onChange }: { trade: Tr
             ? "Finding checked tradespeople near you…"
             : options.length === 0
               ? "We will choose a checked tradesperson near you."
-              : "Every tradesperson here has passed our checks. If the one you choose cannot come, we offer the job to the next nearest."
+              : "Every tradesperson here has passed our checks and works at the time you chose. If the one you choose cannot come, we offer the job to the next nearest."
         }
         columns={1}
         choices={choices}
