@@ -18,6 +18,15 @@ export const checks: Check[] = [
     ],
   },
   {
+    id: "business",
+    title: "Business details checked",
+    appliesTo: "Every tradesperson",
+    body: [
+      "We check the trading name and address, and for a limited company, that the company number is live on the Companies House register.",
+      "It tells you who you are dealing with, and who to contact if something goes wrong.",
+    ],
+  },
+  {
     id: "dbs",
     title: "Basic DBS check seen",
     appliesTo: "Every tradesperson",
@@ -54,10 +63,10 @@ export const checks: Check[] = [
   },
 ];
 
-/** The checks that apply to one trade: the three everyone passes, plus its register. */
+/** The checks that apply to one trade: the four everyone passes, plus its register. */
 export function checksFor(trade: string): Check[] {
   const register = trade === "gas" || trade === "heating" ? "gas-safe" : trade === "electrical" ? "electrical" : null;
-  return checks.filter((c) => c.id === "identity" || c.id === "dbs" || c.id === "insurance" || c.id === register);
+  return checks.filter((c) => c.id === "identity" || c.id === "business" || c.id === "dbs" || c.id === "insurance" || c.id === register);
 }
 
 export const recheckNote =

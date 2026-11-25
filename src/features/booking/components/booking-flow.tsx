@@ -325,7 +325,7 @@ export function BookingFlow() {
                   onChange={(v) => set("slot", v as Draft["slot"])}
                   error={errorFor("slot-group")}
                 />
-                <ProviderPicker trade={draft.trade} postcode={draft.postcode} value={draft.provider} onChange={(id, name) => {
+                <ProviderPicker trade={draft.trade} postcode={draft.postcode} date={draft.date} slot={draft.slot} value={draft.provider} onChange={(id, name) => {
                     set("provider", id);
                     set("providerName", name);
                   }} />

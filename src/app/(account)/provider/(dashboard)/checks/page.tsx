@@ -38,10 +38,10 @@ async function Checks() {
         <p className="text-text-2">
           {d.checksDone === d.checks.length
             ? "Every check is done."
-            : "We call you to see each document. Press “I have sent this to the team” when you have sent one, so we know to look for it."}
+            : "Upload each document below. We check it and tell you here and in your notifications."}
         </p>
       </Card>
-      <ul className="grid divide-y divide-line rounded-lg border border-line bg-white px-5">{d.checks.map((c) => <CheckRow key={c.id} check={c} />)}</ul>
+      <ul className="grid divide-y divide-line rounded-lg border border-line bg-white px-5">{d.checks.map((c) => <CheckRow key={c.id} check={c} providerId={d.viewer.id} />)}</ul>
       <p className="text-text-2">
         Questions about a check? Call us on{" "}
         <a href={site.phone.href} className="font-semibold underline underline-offset-4">

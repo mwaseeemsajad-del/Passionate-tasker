@@ -13,6 +13,8 @@ export type Viewer = { id: string; email: string; role: Role; fullName: string; 
 
 export type ProviderStatus = "pending_checks" | "approved" | "paused";
 
+export type BusinessType = "" | "sole_trader" | "limited" | "partnership";
+
 export type ProviderProfile = {
   id: string;
   trades: Trade[];
@@ -20,19 +22,33 @@ export type ProviderProfile = {
   gasSafe: string;
   electricalScheme: string;
   about: string;
+  businessType: BusinessType;
+  businessName: string;
+  companyNumber: string;
+  businessAddress: string;
+  languages: string[];
+  /** ISO days the person works: 1 Monday to 7 Sunday. */
+  availableDays: number[];
+  availableSlots: SlotId[];
   /** How many onboarding steps are saved, 0 to 3. */
   onboardingStep: number;
   onboardedAt: string | null;
   status: ProviderStatus;
 };
 
-export type CheckKind = "identity" | "dbs" | "insurance" | "gas-safe" | "electrical";
+export type CheckKind = "identity" | "business" | "dbs" | "insurance" | "gas-safe" | "electrical";
 export type CheckStatus = "not_started" | "submitted" | "approved" | "rejected";
 
-export type ProviderCheck = { id: string; kind: CheckKind; status: CheckStatus; note: string; expiresOn: string | null };
+/** A file sent for a check, kept in private storage. `path` opens it through a short-lived link. */
+export type CheckDocument = { path: string; fileName: string; uploadedAt: string };
+
+export type ProviderCheck = { id: string; kind: CheckKind; status: CheckStatus; note: string; expiresOn: string | null; documents: CheckDocument[] };
+
+/** One line of the audit log: who changed what, and when. */
+export type AuditEntry = { action: string; actorName: string; createdAt: string };
 
 /** A tradesperson as the team sees them: profile, contact details and checks together. */
-export type ProviderSummary = ProviderProfile & { fullName: string; phone: string; checks: ProviderCheck[] };
+export type ProviderSummary = ProviderProfile & { fullName: string; phone: string; checks: ProviderCheck[]; history: AuditEntry[] };
 
 export type BookingStatus = "new" | "offered" | "accepted" | "declined" | "completed" | "cancelled";
 

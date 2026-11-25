@@ -5,10 +5,11 @@ import { Badge } from "@/components/ui";
 import { checks as checkCopy } from "@/data/trust";
 import { checkStatus } from "@/features/accounts/booking-status";
 import type { ProviderCheck } from "@/types/accounts";
-import { markCheckSubmitted } from "../actions";
+import { deleteDocument, markCheckSubmitted } from "../actions";
+import { DocumentUpload } from "./document-upload";
 
-/** One check on the provider dashboard, with "I have sent this" while it is still to do. */
-export function CheckRow({ check }: { check: ProviderCheck }) {
+/** One check on the provider dashboard: its documents, an upload, and "I have sent this another way". */
+export function CheckRow({ check, providerId }: { check: ProviderCheck; providerId: string }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState("");
   const title = checkCopy.find((c) => c.id === check.kind)?.title ?? check.kind;
@@ -26,6 +27,40 @@ export function CheckRow({ check }: { check: ProviderCheck }) {
           Runs out {new Date(`${check.expiresOn}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
         </p>
       )}
+      {check.documents.length > 0 && (
+        <ul className="grid gap-1 text-[0.9375rem]">
+          {check.documents.map((d) => (
+            <li key={d.path}>
+              <a href={`/documents?path=${encodeURIComponent(d.path)}`} target="_blank" rel="noreferrer" className="font-medium underline underline-offset-4">
+                {d.fileName}
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>{" "}
+              <span className="text-text-3">sent {new Date(d.uploadedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+              {check.status !== "approved" && (
+                <>
+                  {" · "}
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() =>
+                      start(async () => {
+                        setError("");
+                        const r = await deleteDocument(check.id, d.path);
+                        if (!r.ok) setError(r.errors[0]?.message ?? "Please try again.");
+                      })
+                    }
+                    className="min-h-11 cursor-pointer font-medium text-danger underline underline-offset-4 disabled:opacity-50"
+                  >
+                    Remove<span className="sr-only"> {d.fileName}</span>
+                  </button>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {/* Always open: a second page (the back of an ID card) or a renewal before the old one runs out. */}
+      <DocumentUpload providerId={providerId} checkId={check.id} kind={check.kind} title={title} />
       {canSend && (
         <div className="grid gap-2">
           <button
@@ -40,13 +75,13 @@ export function CheckRow({ check }: { check: ProviderCheck }) {
             }
             className="inline-flex min-h-11 w-fit cursor-pointer items-center rounded-full border border-line bg-white px-5 font-medium transition-colors hover:border-ink disabled:opacity-50"
           >
-            I have sent this to the team<span className="sr-only">: {title}</span>
+            I sent it another way (email or post)<span className="sr-only">: {title}</span>
           </button>
-          <p role="status" className="text-[0.9375rem] font-semibold text-danger">
-            {error}
-          </p>
         </div>
       )}
+      <p role="status" className="text-[0.9375rem] font-semibold text-danger">
+        {error}
+      </p>
     </li>
   );
 }

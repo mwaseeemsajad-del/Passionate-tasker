@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Button, CheckboxGroup, ErrorSummary, FieldError, StepProgress, TextAreaField, TextField } from "@/components/ui";
+import { Button, CheckboxGroup, ChoiceGroup, ErrorSummary, FieldError, StepProgress, TextAreaField, TextField } from "@/components/ui";
 import { services } from "@/data/services";
 import { checks as checkCopy } from "@/data/trust";
 import type { FormError } from "@/features/accounts/validate";
-import type { ProviderProfile } from "@/types/accounts";
+import { SLOTS, type SlotId } from "@/features/booking/draft";
+import type { BusinessType, ProviderProfile } from "@/types/accounts";
 import type { Trade } from "@/types/content";
 import { finishOnboarding, saveRegistrations, saveTrades } from "../actions";
-import { ONBOARDING_STEPS, needsElectrical, needsGasSafe, registerChecks, validateRegistrations, validateTrades } from "../onboarding";
+import { BUSINESS_TYPES, DAYS, LANGUAGES, ONBOARDING_STEPS, needsElectrical, needsGasSafe, registerChecks, validateRegistrations, validateTrades } from "../onboarding";
 
 /*
  * The three onboarding steps on one page. Each step saves before moving on,
@@ -21,6 +22,13 @@ export function OnboardingWizard({ profile }: { profile: ProviderProfile }) {
   const [about, setAbout] = useState(profile.about);
   const [gasSafe, setGasSafe] = useState(profile.gasSafe);
   const [electricalScheme, setElectricalScheme] = useState(profile.electricalScheme);
+  const [languages, setLanguages] = useState<string[]>(profile.languages);
+  const [availableDays, setAvailableDays] = useState<number[]>(profile.availableDays);
+  const [availableSlots, setAvailableSlots] = useState<SlotId[]>(profile.availableSlots);
+  const [businessType, setBusinessType] = useState<BusinessType>(profile.businessType);
+  const [businessName, setBusinessName] = useState(profile.businessName);
+  const [companyNumber, setCompanyNumber] = useState(profile.companyNumber);
+  const [businessAddress, setBusinessAddress] = useState(profile.businessAddress);
   const [agree, setAgree] = useState(false);
   const [errors, setErrors] = useState<FormError[]>([]);
   const [saving, startSaving] = useTransition();
@@ -29,7 +37,8 @@ export function OnboardingWizard({ profile }: { profile: ProviderProfile }) {
   const moved = useRef(false);
 
   const errorFor = (id: string) => errors.find((e) => e.id === id)?.message;
-  const needsRegistrations = needsGasSafe(trades) || needsElectrical(trades);
+  const tradesStep = { trades, postcode, about, languages, availableDays, availableSlots };
+  const businessStep = { gasSafe, electricalScheme, businessType, businessName, companyNumber, businessAddress };
 
   useEffect(() => {
     if (errors.length > 0) summaryRef.current?.focus();
@@ -59,15 +68,14 @@ export function OnboardingWizard({ profile }: { profile: ProviderProfile }) {
     event.preventDefault();
     if (step === 0) {
       run(
-        () => validateTrades({ trades, postcode, about }),
-        () => saveTrades({ trades, postcode, about }),
-        // No register needed for these trades: straight to the checks.
-        () => goTo(needsRegistrations ? 1 : 2),
+        () => validateTrades(tradesStep),
+        () => saveTrades(tradesStep),
+        () => goTo(1),
       );
     } else if (step === 1) {
       run(
-        () => validateRegistrations({ gasSafe, electricalScheme }, trades),
-        () => saveRegistrations({ gasSafe, electricalScheme }, trades),
+        () => validateRegistrations(businessStep, trades),
+        () => saveRegistrations(businessStep, trades),
         () => goTo(2),
       );
     } else {
@@ -76,7 +84,7 @@ export function OnboardingWizard({ profile }: { profile: ProviderProfile }) {
   };
 
   const tradeChoices = services.map((s) => ({ value: s.slug, label: s.name, detail: s.registration }));
-  const checkKinds = ["identity", "dbs", "insurance", ...registerChecks(trades)];
+  const checkKinds = ["identity", "business", "dbs", "insurance", ...registerChecks(trades)];
 
   return (
     <section aria-labelledby="onboarding-step-title" className="grid gap-8">
@@ -121,11 +129,80 @@ export function OnboardingWizard({ profile }: { profile: ProviderProfile }) {
               onChange={(e) => setAbout(e.target.value)}
               error={errorFor("about")}
             />
+            <CheckboxGroup
+              name="languages"
+              legend="Which languages can you speak with customers?"
+              hint="Customers who prefer one of these see it on your profile."
+              columns={3}
+              choices={LANGUAGES.map((l) => ({ value: l, label: l }))}
+              value={languages}
+              onChange={setLanguages}
+              error={errorFor("languages-group")}
+            />
+            <CheckboxGroup
+              name="days"
+              legend="Which days do you work?"
+              hint="We only offer you jobs on these days."
+              columns={3}
+              choices={DAYS.map((d, i) => ({ value: String(i + 1), label: d }))}
+              value={availableDays.map(String)}
+              onChange={(v) => setAvailableDays(v.map(Number).sort())}
+              error={errorFor("days-group")}
+            />
+            <CheckboxGroup
+              name="slots"
+              legend="What times of day do you work?"
+              columns={3}
+              choices={SLOTS.map((t) => ({ value: t.id, label: t.label, detail: t.hours }))}
+              value={availableSlots}
+              onChange={(v) => setAvailableSlots(v as SlotId[])}
+              error={errorFor("slots-group")}
+            />
           </>
         )}
 
         {step === 1 && (
           <>
+            <ChoiceGroup
+              name="businessType"
+              legend="How is your business set up?"
+              hint="We check this before your first job."
+              columns={3}
+              choices={BUSINESS_TYPES}
+              value={businessType}
+              onChange={(v) => setBusinessType(v as BusinessType)}
+              error={errorFor("businessType-group")}
+            />
+            <TextField
+              id="businessName"
+              label={businessType === "sole_trader" ? "Trading name" : "Company or partnership name"}
+              hint={businessType === "sole_trader" ? "Leave empty if you trade under your own name." : undefined}
+              optional={businessType === "sole_trader"}
+              autoComplete="organization"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              error={errorFor("businessName")}
+            />
+            {businessType === "limited" && (
+              <TextField
+                id="companyNumber"
+                label="Companies House number"
+                hint="8 characters, like 01234567 or SC123456. We look it up on the register."
+                value={companyNumber}
+                onChange={(e) => setCompanyNumber(e.target.value)}
+                error={errorFor("companyNumber")}
+                className="max-w-xs"
+              />
+            )}
+            <TextAreaField
+              id="businessAddress"
+              label="Business address"
+              hint="Where your business is registered or run from, with the postcode."
+              autoComplete="street-address"
+              value={businessAddress}
+              onChange={(e) => setBusinessAddress(e.target.value)}
+              error={errorFor("businessAddress")}
+            />
             {needsGasSafe(trades) && (
               <TextField
                 id="gasSafe"
@@ -148,7 +225,6 @@ export function OnboardingWizard({ profile }: { profile: ProviderProfile }) {
                 error={errorFor("electricalScheme")}
               />
             )}
-            {!needsRegistrations && <p className="text-text-2">Your trades do not need a register. Continue to your checks.</p>}
           </>
         )}
 
@@ -181,7 +257,7 @@ export function OnboardingWizard({ profile }: { profile: ProviderProfile }) {
                   className="mt-1 size-5 shrink-0 accent-ink"
                 />
                 <span>
-                  I agree that Passionate Taskers may check my photo ID, a basic DBS certificate, my insurance and my trade registration before I
+                  I agree that Passionate Taskers may check my photo ID, my business details, a basic DBS certificate, my insurance and my trade registration before I
                   am offered any job, and again every year.
                 </span>
               </label>
@@ -196,7 +272,7 @@ export function OnboardingWizard({ profile }: { profile: ProviderProfile }) {
           {step > 0 && (
             <button
               type="button"
-              onClick={() => goTo(step === 2 && !needsRegistrations ? 0 : step - 1)}
+              onClick={() => goTo(step - 1)}
               className="min-h-11 cursor-pointer px-2 font-medium underline underline-offset-4"
             >
               Back
